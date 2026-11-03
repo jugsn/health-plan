@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>健康计划 · 减脂与睡眠</title>
+<meta name="theme-color" content="#0f9d76">
+<meta name="description" content="每日记录体重、睡眠、阅读与拒绝训练,手机电脑自动同步">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1a2230; --muted:#6b7688;
+    --line:#e6e9ee; --accent:#0f9d76; --accent-soft:#e6f6f1;
+    --warn:#d97706; --warn-soft:#fdf3e3; --blue:#2563eb; --blue-soft:#e8effd;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:rgba(246,247,249,.94);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+  }
+  .head-inner{max-width:1080px; margin:0 auto; padding:14px 20px 0}
+  .title-row{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+  h1{font-size:18px; margin:0; letter-spacing:.5px}
+  .subtitle{color:var(--muted); font-size:13px}
+  nav{display:flex; gap:4px; margin-top:10px; overflow-x:auto}
+  nav button{
+    border:0; background:transparent; color:var(--muted); font-size:14px;
+    padding:9px 14px; border-radius:8px 8px 0 0; cursor:pointer; white-space:nowrap;
+  }
+  nav button.active{background:var(--card); color:var(--ink); font-weight:600; box-shadow:0 -1px 0 var(--line) inset}
+  main{max-width:1080px; margin:0 auto; padding:20px}
+  section{display:none}
+  section.active{display:block}
+  .grid{display:grid; gap:16px}
+  @media(min-width:860px){ .cols-2{grid-template-columns:1.4fr 1fr} .cols-3{grid-template-columns:repeat(3,1fr)} }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  h2{font-size:16px; margin:0 0 4px}
+  h3{font-size:14px; margin:20px 0 8px; color:var(--ink)}
+  .muted{color:var(--muted); font-size:13px}
+  .field{display:flex; flex-direction:column; gap:4px; margin-bottom:12px}
+  .field label{font-size:13px; color:var(--muted)}
+  input,select,textarea{
+    font:inherit; color:var(--ink); background:#fff; border:1px solid var(--line);
+    border-radius:9px; padding:8px 10px; width:100%;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
+  .row{display:flex; gap:12px; flex-wrap:wrap}
+  .row .field{flex:1; min-width:130px}
+  .btn{
+    font:inherit; font-weight:600; border:0; border-radius:10px; padding:10px 18px;
+    background:var(--accent); color:#fff; cursor:pointer;
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn.ghost{background:#fff; color:var(--ink); border:1px solid var(--line)}
+  .btn.danger{background:#dc2626}
+  .btn.sm{padding:6px 12px; font-size:13px; border-radius:8px}
+  /* habits */
+  .habit{
+    display:flex; align-items:flex-start; gap:10px; padding:9px 10px;
+    border-radius:10px; cursor:pointer; user-select:none;
+  }
+  .habit:hover{background:#fafbfc}
+  .habit input{width:18px; height:18px; margin-top:3px; accent-color:var(--accent); flex:none}
+  .habit.done{background:var(--accent-soft)}
+  .habit .tag{font-size:11px; padding:1px 6px; border-radius:20px; background:var(--blue-soft); color:var(--blue); margin-left:auto; flex:none}
+  .habit .tag.rest{background:#f1f2f4; color:var(--muted)}
+  /* stats */
+  .stat{background:#fbfcfd; border:1px solid var(--line); border-radius:12px; padding:12px 14px}
+  .stat .v{font-size:22px; font-weight:700; letter-spacing:-.5px}
+  .stat .k{font-size:12px; color:var(--muted)}
+  .stat .d{font-size:12px; margin-top:2px}
+  .up{color:#dc2626} .down{color:var(--accent)} .flat{color:var(--muted)}
+  /* phase banner */
+  .phase-banner{
+    background:linear-gradient(135deg,var(--accent-soft),#fff);
+    border:1px solid #cfeee4; border-radius:var(--radius); padding:16px 20px;
+  }
+  .phase-banner .ph{font-size:13px; color:var(--accent); font-weight:700; letter-spacing:1px}
+  .phase-banner .pt{font-size:17px; font-weight:700; margin:2px 0 6px}
+  /* plan */
+  .plan-block{border-left:3px solid var(--accent); padding-left:14px; margin-bottom:22px}
+  .plan-block.blue{border-color:var(--blue)}
+  .plan-block.warn{border-color:var(--warn)}
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.5px}
+  ul{margin:6px 0; padding-left:20px} li{margin:4px 0}
+  .pill{display:inline-block; font-size:12px; padding:2px 9px; border-radius:20px; background:var(--accent-soft); color:var(--accent); font-weight:600}
+  .pill.w{background:var(--warn-soft); color:var(--warn)}
+  .pill.b{background:var(--blue-soft); color:var(--blue)}
+  .chart{width:100%; height:auto; display:block}
+  .legend{display:flex; gap:16px; font-size:12px; color:var(--muted); margin-bottom:6px; flex-wrap:wrap}
+  .legend i{display:inline-block; width:14px; height:3px; border-radius:2px; margin-right:5px; vertical-align:middle}
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+    background:#1a2230; color:#fff; padding:10px 18px; border-radius:10px; font-size:14px;
+    opacity:0; pointer-events:none; transition:.25s; z-index:99;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .date-nav{display:flex; align-items:center; gap:8px; margin-bottom:14px}
+  .date-nav .d{font-weight:700; font-size:15px; min-width:150px; text-align:center}
+  .hint{background:var(--warn-soft); border:1px solid #f3e0bd; border-radius:10px; padding:10px 12px; font-size:13px; color:#8a5a06; margin-top:12px}
+  .week-list{display:flex; flex-direction:column; gap:8px}
+  .week-item{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 12px; border:1px solid var(--line); border-radius:10px; cursor:pointer; font-size:14px;
+  }
+  .week-item:hover{border-color:var(--accent)}
+  .week-item.sel{background:var(--accent-soft); border-color:var(--accent)}
+  /* 成长页 */
+  .progress{height:8px; background:#eef1f5; border-radius:6px; overflow:hidden; margin:6px 0}
+  .progress i{display:block; height:100%; background:var(--accent); border-radius:6px; transition:width .3s}
+  .book{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px}
+  .book .bt{display:flex; justify-content:space-between; gap:8px; align-items:center; flex-wrap:wrap}
+  .book .ops{display:flex; gap:6px; align-items:center}
+  .book .ops input{width:76px; padding:4px 6px; font-size:13px}
+  .ladder-item{border-left:3px solid var(--line); padding:8px 12px; margin-bottom:8px; background:#fbfcfd; border-radius:0 8px 8px 0}
+  .ladder-item.done{border-color:var(--accent); opacity:.72}
+  .ladder-item.now{border-color:var(--warn); background:var(--warn-soft)}
+  .script{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px}
+  .script .s-title{font-size:12px; color:var(--muted); font-weight:600}
+  .script .s-say{font-weight:600; margin:3px 0; color:var(--ink)}
+  .reco{display:flex; justify-content:space-between; gap:10px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line)}
+  /* 云同步状态 */
+  .sync-badge{
+    font-size:12px; padding:2px 10px; border-radius:20px; cursor:pointer; white-space:nowrap;
+    background:#f1f2f4; color:var(--muted); border:1px solid var(--line);
+  }
+  .sync-badge.ok{background:var(--accent-soft); color:var(--accent); border-color:#cfeee4}
+  .sync-badge.err{background:#fdecec; color:#dc2626; border-color:#f6c8c8}
+  .sync-badge.busy{background:var(--blue-soft); color:var(--blue); border-color:#cddcfd}
+  .sync-badge.off{background:var(--warn-soft); color:var(--warn); border-color:#f3e0bd}
+  .tabbar.bottom{display:none}
+  .hint code{background:#fff; padding:1px 5px; border-radius:5px; border:1px solid var(--line); font-size:12px}
+
+  /* ===== 移动端 ===== */
+  @media (max-width:640px){
+    body{padding-bottom:66px}
+    .head-inner{padding:10px 12px 0}
+    h1{font-size:15px}
+    .subtitle{display:none}
+    .title-row{gap:8px}
+    #nav{display:none}
+    .tabbar.bottom{
+      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:40;
+      background:rgba(255,255,255,.97); backdrop-filter:blur(8px);
+      border-top:1px solid var(--line);
+      padding:4px 2px calc(4px + env(safe-area-inset-bottom));
+    }
+    .tabbar.bottom button{
+      flex:1; min-width:0; border-radius:9px; padding:3px 0 5px; font-size:11px;
+      color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:1px;
+    }
+    .tabbar.bottom button::before{content:attr(data-ic); font-size:19px; line-height:1.1}
+    .tabbar.bottom button.active{background:var(--accent-soft); color:var(--accent); box-shadow:none; font-weight:600}
+    main{padding:12px}
+    .card{padding:14px; border-radius:12px}
+    .grid{gap:12px}
+    input,select,textarea{font-size:16px; padding:10px}
+    .btn{padding:12px 16px; font-size:15px}
+    .btn.sm{padding:8px 12px; font-size:13px}
+    .row .field{min-width:100%}
+    .date-nav{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center}
+    .date-nav .d{min-width:0; font-size:14px; text-align:center}
+    #todayBtn{grid-column:1 / -1; width:100%; text-align:center}
+    #saveEntry{width:100%}
+    .stat .v{font-size:18px}
+    #statCards, #g_stats, #reviewStats{grid-template-columns:1fr 1fr !important}
+    table{font-size:13px}
+    th,td{padding:6px 6px; word-break:break-word}
+    .week-item{flex-direction:column; align-items:flex-start; gap:2px}
+    .habit{padding:11px 8px}
+    .phase-banner{padding:13px 15px}
+    footer{margin-bottom:10px}
+  }
+  footer{max-width:1080px; margin:30px auto 40px; padding:0 20px; color:var(--muted); font-size:12px; text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <div class="title-row">
+      <h1>健康计划 · 减脂 + 睡眠</h1>
+      <span class="sync-badge" id="syncBadge" title="点击立即同步">未配置同步</span>
+      <span class="subtitle">每天 2 分钟记录 · 每周 15 分钟复盘</span>
+    </div>
+    <nav id="nav" class="tabbar">
+      <button data-tab="today" data-ic="📝" class="active">今日</button>
+      <button data-tab="plan" data-ic="📅">12 周计划</button>
+      <button data-tab="growth" data-ic="📚">成长</button>
+      <button data-tab="data" data-ic="📊">数据</button>
+      <button data-tab="review" data-ic="🔁">周复盘</button>
+      <button data-tab="settings" data-ic="⚙️">设置</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= 今日 ================= -->
+<section id="tab-today" class="active">
+  <div class="phase-banner" id="phaseBanner"></div>
+
+  <div class="grid cols-2" style="margin-top:16px">
+    <div class="card">
+      <div class="date-nav">
+        <button class="btn ghost sm" id="prevDay">← 前一天</button>
+        <span class="d" id="curDateLabel"></span>
+        <button class="btn ghost sm" id="nextDay">后一天 →</button>
+        <button class="btn ghost sm" id="todayBtn" style="margin-left:auto">回到今天</button>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>晨起体重(kg)</label>
+          <input type="number" id="f_weight" step="0.1" placeholder="如 92.4">
+        </div>
+        <div class="field">
+          <label>今日步数</label>
+          <input type="number" id="f_steps" step="100" placeholder="如 8600">
+        </div>
+        <div class="field">
+          <label>饥饿感(1=很饿 10=很饱)</label>
+          <input type="number" id="f_hunger" min="1" max="10" placeholder="1-10">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>上床时间</label>
+          <input type="time" id="f_sleepStart">
+        </div>
+        <div class="field">
+          <label>起床时间</label>
+          <input type="time" id="f_sleepEnd">
+        </div>
+        <div class="field">
+          <label>睡眠时长</label>
+          <input type="text" id="f_sleepDur" readonly placeholder="自动计算" style="background:#fbfcfd">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>蛋白质达标餐数(0-3)</label>
+          <select id="f_protein">
+            <option value="">未记录</option>
+            <option value="0">0 餐</option><option value="1">1 餐</option>
+            <option value="2">2 餐</option><option value="3">3 餐(全部达标)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>力量训练</label>
+          <select id="f_train">
+            <option value="">未记录</option>
+            <option value="done">已完成</option>
+            <option value="half">只做了部分</option>
+            <option value="none">没做</option>
+            <option value="rest">今天是休息日</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>自由餐/外食</label>
+          <select id="f_free">
+            <option value="no">无</option>
+            <option value="yes">有(本周 2 次以内即可)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>今日阅读(分钟)</label>
+          <input type="number" id="f_readMin" min="0" placeholder="20">
+        </div>
+        <div class="field">
+          <label>阅读页数</label>
+          <input type="number" id="f_readPages" min="0" placeholder="15">
+        </div>
+        <div class="field">
+          <label>今天主动表达/拒绝</label>
+          <select id="f_assert">
+            <option value="">未记录</option>
+            <option value="done">有(1 次以上)</option>
+            <option value="none">没有</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>备注(吃了什么、为什么熬夜、状态如何)</label>
+        <textarea id="f_notes" rows="3" placeholder="例:加班到 23 点,喝了奶茶,睡前刷手机到 1 点"></textarea>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center">
+        <button class="btn" id="saveEntry">保存今日记录</button>
+        <span class="muted" id="saveState"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>今日习惯清单</h2>
+      <p class="muted" id="habitPhaseNote"></p>
+      <div id="habitList"></div>
+
+      <div class="hint" id="tipBox"></div>
+
+      <h3>本周速览</h3>
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px" id="weekMini"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 计划 ================= -->
+<section id="tab-plan">
+  <div class="card">
+    <h2>总原则:一次只改一件事,系统跑 12 周</h2>
+    <p class="muted">你的情况是<b>超重明显 + 作息混乱常熬夜 + 运动不规律</b>。这三件事有因果关系:睡不好 → 饥饿素升高、意志力下降 → 吃得多、练得少 → 更胖更累 → 更晚睡。所以计划的顺序是:<b>先稳住起床时间,再稳住饮食结构,最后加运动负荷</b>。反过来做一定失败。</p>
+
+    <div class="plan-block">
+      <h3 style="margin-top:0">三阶段路线图</h3>
+      <table>
+        <tr><th>阶段</th><th>时间</th><th>只加这几件事</th><th>完成标准</th></tr>
+        <tr>
+          <td><span class="pill">阶段 1 · 地基</span></td>
+          <td>第 1–4 周</td>
+          <td>① 固定起床时间(浮动&lt;1h)<br>② 起床后 30 分钟内见光<br>③ 每天晨起称重<br>④ 三餐蛋白质达标<br>⑤ 睡前 1 小时降档(不刷手机)</td>
+          <td>每周至少 5 天做到;体重开始每周降 0.5–1%</td>
+        </tr>
+        <tr>
+          <td><span class="pill b">阶段 2 · 加负荷</span></td>
+          <td>第 5–8 周</td>
+          <td>在阶段 1 基础上加:<br>① 每周 3 次全身力量训练<br>② 每天 8000 步<br>③ 不喝含糖饮料/酒</td>
+          <td>训练 3 次全完成;步数达标 ≥5 天/周</td>
+        </tr>
+        <tr>
+          <td><span class="pill w">阶段 3 · 精细化</span></td>
+          <td>第 9–12 周</td>
+          <td>在前两阶段基础上加:<br>① 估算热量,缺口保持 15–20%<br>② 每周复盘调整一个变量<br>③ 处理平台期(见下)</td>
+          <td>体重趋势线继续向下;腰围降 ≥3cm</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="plan-block">
+      <h3>减脂:四个杠杆,按优先级排</h3>
+      <table>
+        <tr><th>优先级</th><th>杠杆</th><th>具体做法</th></tr>
+        <tr><td>1</td><td><b>蛋白质</b></td><td>每餐一掌心大小的肉/鱼/蛋/豆制品,全天 1.6–2.2g/kg 体重(80kg ≈ 130–175g)。蛋白最高饱腹、最保肌肉,是第一位。</td></tr>
+        <tr><td>2</td><td><b>热量缺口</b></td><td>每天少吃 300–500 kcal,不节食。先删三个最便宜的:含糖饮料、油炸/零食、睡前加餐。</td></tr>
+        <tr><td>3</td><td><b>力量训练</b></td><td>每周 3 次,全身动作:深蹲/硬拉类、推、拉、核心。每次 40 分钟。减脂期力量训练的作用是<b>保住肌肉</b>,让掉的是脂肪。</td></tr>
+        <tr><td>4</td><td><b>日常步数</b></td><td>8000–10000 步。耗能大、不增饥饿、恢复快,是性价比最高的热量消耗方式。</td></tr>
+      </table>
+      <ul>
+        <li><b>速度:</b>每周减 0.5–1% 体重(90kg → 每周 0.45–0.9kg)。快过这个数,掉的多半是肌肉,必反弹。</li>
+        <li><b>平台期(连续 2 周体重不动):</b>先查执行率——执行率 &lt;90% 就先补执行,不改计划;执行率没问题,再把步数 +1500 或热量 -100kcal,只改一个。</li>
+        <li><b>体重波动是正常的:</b>一天涨 1–2kg 全是水和食物残渣。永远只看 <b>7 天平均线</b>,数据页已自动画出。</li>
+      </ul>
+    </div>
+
+    <div class="plan-block blue">
+      <h3>睡眠:熬夜修正方案(针对你)</h3>
+      <table>
+        <tr><th>顺序</th><th>动作</th><th>为什么</th></tr>
+        <tr><td>①</td><td><b>先固定起床时间</b>,哪怕前一晚只睡了 4 小时,第二天也照常起。用闹钟放客厅。</td><td>起床点是生物钟的锚。先锁起床,入睡时间会自己跟上来。这是最重要的一步。</td></tr>
+        <tr><td>②</td><td><b>起床后 30 分钟内出门见光 10–15 分钟</b>(阴天也有效)。</td><td>抑制褪黑素、设定 16 小时后的睡眠驱动力,当天晚上会自然困。</td></tr>
+        <tr><td>③</td><td><b>咖啡因截止 14:00</b>;下午 2 点后不喝奶茶/功能饮料。</td><td>咖啡因半衰期 5–6 小时,下午 3 点喝 = 睡前体内还有一半。</td></tr>
+        <tr><td>④</td><td><b>睡前 1 小时降档</b>:灯光调暗、手机放到床外充电、只做低刺激事(洗漱、拉伸、纸质书/听书)。</td><td>屏幕蓝光 + 内容刺激直接推迟入睡;放床外是唯一被反复验证有效的办法。</td></tr>
+        <tr><td>⑤</td><td><b>卧室:凉(18–22℃)、暗、静</b>;床只用来睡觉。</td><td>体温下降是入睡信号;床上刷剧会让大脑把床和清醒绑定。</td></tr>
+        <tr><td>⑥</td><td><b>周末起床时间浮动 &lt; 1 小时</b>,不补觉超过 1 小时。</td><td>"社交时差"是周一最困、最容易暴食的元凶。</td></tr>
+      </table>
+      <p class="muted">节奏建议:如果现在 1–2 点睡,不要一步到 23 点。<b>每 3 天把上床时间提前 15 分钟</b>,同时起床时间不动,2–3 周平移完成。目标:23:30 上床,07:00 起床,睡 7.5 小时。</p>
+    </div>
+
+    <div class="plan-block blue">
+      <h3>看书计划:每天 20 分钟,和睡眠共用一个时段</h3>
+      <table>
+        <tr><th>规则</th><th>做法</th></tr>
+        <tr><td>时段</td><td>绑定在<b>睡前降档期</b>:22:30 手机出门充电,拿纸质书/墨水屏读 20–30 分钟。不用手机读——一定会滑走。</td></tr>
+        <tr><td>节奏</td><td>一次只读 1 本,读完再开下本。月目标 2 本(实用类 1 + 兴趣类 1)。<b>宁可少,不可断。</b></td></tr>
+        <tr><td>输出</td><td>每读完一本写 3 句话:① 讲了什么 ② 我要改什么 ③ 下一步行动。没有输出的阅读等于没读。</td></tr>
+        <tr><td>底线</td><td>断 1 天不算失败。实在没时间,<b>读 5 页也算完成</b>——保住"每天碰书"这个动作比读多少重要。</td></tr>
+        <tr><td>为什么放睡前</td><td>它替代了刷手机,同时压低睡前刺激。阅读量和睡眠是<b>同一个习惯</b>,不是两件事。</td></tr>
+      </table>
+      <p class="muted">顺序建议:先读《掌控习惯》——它讲的正是本计划的运作原理,读完你对整个 12 周计划的理解会完全不同。</p>
+    </div>
+
+    <div class="plan-block">
+      <h3>拒绝与社交:把"变强"拆成 7 级可练习的动作</h3>
+      <p class="muted">你觉得自己软弱,大概率是因为:<b>每次拒绝都是临场发挥,而对方在主场</b>。解法不是打鸡血,是提前备好话术 + 从低风险场景开始重复,直到它变成默认反应。</p>
+      <div id="planLadder"></div>
+      <ul>
+        <li><b>度量:</b>每周至少 3 次主动表达/拒绝,记录在"成长"页。看的不是成功几次,是<b>难度评分有没有下降</b>——同样的事从 8 分降到 4 分,就是进步。</li>
+        <li><b>主战场:</b>第 4 级(酒局、夜宵、劝奶茶)直接关系你的减脂和睡眠。<b>每周至少成功拒绝 2 次</b>,这一项顶其他所有。</li>
+        <li><b>失败处理:</b>没扛住不算失败,当晚写进练习记录("我说了行,然后后悔了")。能识别出"我又自动答应了",本身就是进步。</li>
+        <li><b>心态:</b>你不是变冷漠,你是把过去乱开的门一扇扇关上。真正的关系经得起一次拒绝。</li>
+      </ul>
+    </div>
+
+    <div class="plan-block warn">
+      <h3>执行规则:让计划活下去</h3>
+      <ul>
+        <li><b>只盯行为目标,不盯体重。</b>体重是滞后指标,行为是唯一你能控制的东西。</li>
+        <li><b>80% 规则:</b>每周允许 2 次自由餐、1 个完全休息日。计划有弹性才走得远。</li>
+        <li><b>断 1 天不算失败,永远不断 2 天。</b>漏了训练就出门走 20 分钟;熬了夜第二天照常起床。<b>恢复速度</b>是唯一重要的指标。</li>
+        <li><b>习惯叠加:</b>新习惯挂在旧习惯后面——刷完牙就称重、吃完午饭就出门走、手机充电就放客厅。</li>
+        <li><b>环境设计:</b>零食不买进家门;水果放视线高度;床头只留书。</li>
+        <li><b>每周只改一个变量。</b>同时改三样,你永远不知道是什么起作用了。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 成长 ================= -->
+<section id="tab-growth">
+  <div class="grid cols-3" id="g_stats" style="margin-bottom:16px"></div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>看书计划</h2>
+      <p class="muted">阅读放在<b>睡前降档时段</b>(22:30 后手机充电、拿纸质书或墨水屏)——一个习惯同时解决"看不进书"和"睡不着刷手机"。</p>
+
+      <div class="row">
+        <div class="field">
+          <label>今日阅读(分钟)</label>
+          <input type="number" id="g_readMin" min="0" placeholder="20">
+        </div>
+        <div class="field">
+          <label>今日页数</label>
+          <input type="number" id="g_readPages" min="0" placeholder="15">
+        </div>
+        <div class="field">
+          <label>目标(分钟/天)</label>
+          <input type="number" id="g_readGoal" min="5" max="180">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center">
+        <button class="btn sm" id="g_saveRead">保存今日阅读</button>
+        <span class="muted" id="g_dateLabel"></span>
+      </div>
+
+      <h3>在读书单</h3>
+      <div id="g_bookList"></div>
+
+      <h3>添加书籍</h3>
+      <div class="row">
+        <div class="field"><label>书名</label><input id="g_bTitle" placeholder="如 掌控习惯"></div>
+        <div class="field"><label>总页数</label><input id="g_bPages" type="number" placeholder="320"></div>
+      </div>
+      <button class="btn ghost sm" id="g_addBook">加入书单</button>
+
+      <h3>推荐书单(一键加入)</h3>
+      <div id="g_reco"></div>
+    </div>
+
+    <div class="card">
+      <h2>拒绝与社交训练</h2>
+      <p class="muted">"软弱"不是性格缺陷,是<b>练得少</b>。它像肌肉:从低风险场景逐级往上,8 周后你会明显不一样。每天 1 次小练习,记录在下方。</p>
+
+      <div class="field">
+        <label>当前正在练第几级</label>
+        <select id="g_level"></select>
+      </div>
+      <div id="g_ladder"></div>
+
+      <h3>今日练习(每天 1 次)</h3>
+      <div class="field">
+        <label>场景(对谁、什么事)</label>
+        <input id="g_aScene" placeholder="例:同事让我帮忙带饭 / 朋友约夜宵">
+      </div>
+      <div class="field">
+        <label>我实际说了什么(原话)</label>
+        <textarea id="g_aSaid" rows="2" placeholder="例:今天不方便,你们先吃"></textarea>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>难度(1=很轻松 10=很难)</label>
+          <input type="number" id="g_aDiff" min="1" max="10">
+        </div>
+        <div class="field">
+          <label>结果</label>
+          <select id="g_aResult">
+            <option value="">未记录</option>
+            <option value="ok">顺利,对方无所谓</option>
+            <option value="okhard">有点难,但扛住了</option>
+            <option value="bad">被纠缠 / 没扛住</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn sm" id="g_saveAssert">保存今日练习</button>
+
+      <h3>四条铁律</h3>
+      <ul>
+        <li><b>拒绝不需要理由。</b>一给理由,对方就开始讨价还价。</li>
+        <li><b>先延迟再回答:</b>"我先看看安排,晚点回你。"打断你的自动答应。</li>
+        <li><b>你拒绝的是这件事,不是这个人。</b>对方的失望由对方负责。</li>
+        <li><b>短期尴尬 vs 长期怨恨,永远选前者。</b>答应后心里憋着,关系反而更糟。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>万能话术库</h2>
+    <p class="muted">背下来,现场直接用。拒绝的话越短越好。</p>
+    <div id="g_scripts"></div>
+  </div>
+</section>
+
+<!-- ================= 数据 ================= -->
+<section id="tab-data">
+  <div class="grid cols-3" id="statCards" style="margin-bottom:16px"></div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h2>体重趋势</h2>
+    <div class="legend">
+      <span><i style="background:#cbd5e1"></i>每日体重</span>
+      <span><i style="background:#0f9d76"></i>7 天平均线(唯一要看的线)</span>
+      <span><i style="background:#d97706"></i>目标体重</span>
+    </div>
+    <div id="chartWeight"></div>
+    <p class="muted" id="weightNote"></p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>睡眠时长(近 30 天)</h2>
+      <div class="legend"><span><i style="background:#2563eb"></i>实际时长</span><span><i style="background:#e6f6f1"></i>目标区间 7–9 小时</span></div>
+      <div id="chartSleep"></div>
+    </div>
+    <div class="card">
+      <h2>习惯执行率(按周)</h2>
+      <div class="legend"><span><i style="background:#0f9d76"></i>完成率</span><span><i style="background:#d97706"></i>及格线 80%</span></div>
+      <div id="chartAdh"></div>
+    </div>
+  </div>
+
+  <div class="grid cols-2" style="margin-top:16px">
+    <div class="card">
+      <h2>力量训练记录</h2>
+      <div id="chartTrain"></div>
+    </div>
+    <div class="card">
+      <h2>阅读时长(近 30 天)</h2>
+      <div id="chartRead"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 复盘 ================= -->
+<section id="tab-review">
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>选择要复盘的周</h2>
+      <p class="muted">每周日花 15 分钟,只回答三个问题。数据已自动生成。</p>
+      <div class="week-list" id="weekList"></div>
+    </div>
+    <div class="card" id="reviewPanel">
+      <h2 id="reviewTitle">周复盘</h2>
+      <div class="grid cols-3" id="reviewStats" style="margin:12px 0"></div>
+      <div class="field">
+        <label>① 什么有效?(本周做对了什么,继续保持)</label>
+        <textarea id="r_good" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>② 什么没效?(卡在哪、断在哪)</label>
+        <textarea id="r_bad" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>③ 下周只改一个什么?(必须只有一条)</label>
+        <textarea id="r_next" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>本周整体完成度(1-10)</label>
+        <input type="number" id="r_rate" min="1" max="10">
+      </div>
+      <button class="btn" id="saveReview">保存本周复盘</button>
+      <span class="muted" id="reviewState" style="margin-left:10px"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 设置 ================= -->
+<section id="tab-settings">
+  <div class="card" style="margin-bottom:16px">
+    <h2>云同步 · 手机和电脑共用一份数据</h2>
+    <p class="muted">数据默认只存在当前浏览器。配置一次后,所有设备通过<b>你的 GitHub 私密 Gist</b> 自动合并——按天/按周合并,两边同时改也不会互相覆盖。</p>
+
+    <div class="row">
+      <div class="field">
+        <label>GitHub 访问令牌(只勾选 gist 权限)</label>
+        <input type="password" id="sync_token" placeholder="ghp_ 开头,粘贴到这里" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Gist ID(点①会自动填好)</label>
+        <input id="sync_gist" placeholder="先在电脑上点① 创建">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+      <button class="btn" id="syncCreate">① 创建同步空间</button>
+      <button class="btn ghost" id="syncNow">② 立即同步</button>
+      <label class="muted" style="display:flex; gap:6px; align-items:center; cursor:pointer">
+        <input type="checkbox" id="syncAuto" style="width:auto;height:auto"> 自动同步(打开页面/保存后/每分钟)
+      </label>
+    </div>
+    <div class="muted" id="syncStatus" style="margin-top:10px"></div>
+
+    <div class="hint" style="margin-top:12px">
+      <b>一次性设置(约 5 分钟):</b><br>
+      1. 电脑浏览器打开 <code>github.com/settings/tokens/new</code>,名称随意,<b>只勾选 gist</b>,点 Generate token,复制 <code>ghp_</code> 开头的字符串<br>
+      2. 粘贴到上面的令牌框 → 点 <b>① 创建同步空间</b>(会自动生成私密 Gist 并填好 ID)<br>
+      3. 手机浏览器打开本页 → 粘贴<b>同一个</b>令牌和 Gist ID → 点 <b>② 立即同步</b><br>
+      4. 手机 Chrome 菜单 → <b>添加到主屏幕</b>,以后从桌面图标打开<br>
+      <span style="color:#8a5a06">令牌只存在各设备本地、绝不会写进同步数据;Gist 是私密的。</span>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <div class="field">
+        <label>API 地址(高级,一般不用动)</label>
+        <input id="sync_api" placeholder="https://api.github.com">
+      </div>
+      <div class="field" style="justify-content:flex-end">
+        <button class="btn" id="syncSave">保存同步设置</button>
+      </div>
+    </div>
+
+    <div id="installBox" style="display:none; margin-top:6px">
+      <button class="btn ghost sm" id="installBtn">📱 把应用安装到手机桌面</button>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>基本设置</h2>
+      <div class="field">
+        <label>计划开始日期(第 1 周第 1 天)</label>
+        <input type="date" id="s_start">
+      </div>
+      <div class="field">
+        <label>目标体重(kg)</label>
+        <input type="number" id="s_goal" step="0.5" placeholder="如 75">
+      </div>
+      <div class="field">
+        <label>固定起床时间</label>
+        <input type="time" id="s_wake">
+      </div>
+      <div class="field">
+        <label>目标上床时间</label>
+        <input type="time" id="s_bed">
+      </div>
+      <div class="field">
+        <label>力量训练日(可多选)</label>
+        <div id="s_trainDays" style="display:flex; gap:6px; flex-wrap:wrap"></div>
+      </div>
+      <button class="btn" id="saveSettings">保存设置</button>
+    </div>
+
+    <div class="card">
+      <h2>数据</h2>
+      <p class="muted">数据保存在<b>本浏览器的本地存储</b>里,不会上传到任何地方。换电脑、清缓存前请先导出备份。</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px">
+        <button class="btn ghost" id="exportBtn">导出备份(JSON)</button>
+        <button class="btn ghost" id="importBtn">导入备份</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none">
+      </div>
+      <hr style="border:0; border-top:1px solid var(--line); margin:18px 0">
+      <button class="btn danger sm" id="clearBtn">清空全部数据</button>
+      <div class="hint" style="margin-top:14px">
+        <b>使用建议:</b>每天早上排便后称重 → 打开"今日"填 5 个格子 → 勾习惯清单 → 保存。晚上睡前只填上床时间。周日打开"周复盘"写三句话。
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav class="tabbar bottom" id="navBottom">
+  <button data-tab="today" data-ic="📝" class="active">今日</button>
+  <button data-tab="plan" data-ic="📅">计划</button>
+  <button data-tab="growth" data-ic="📚">成长</button>
+  <button data-tab="data" data-ic="📊">数据</button>
+  <button data-tab="review" data-ic="🔁">复盘</button>
+  <button data-tab="settings" data-ic="⚙️">设置</button>
+</nav>
+
+<footer>数据默认只存在本机 · 配置云同步后自动备份到你的 GitHub Gist(私密)</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== 数据层 ========== */
+const KEY = 'healthplan.v1';
+const todayStr = () => toKey(new Date());
+function toKey(d){
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+function parseKey(k){ const [y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(k,n){ const d=parseKey(k); d.setDate(d.getDate()+n); return toKey(d); }
+function daysBetween(a,b){ return Math.round((parseKey(b)-parseKey(a))/86400000); }
+function mondayOf(k){ const d=parseKey(k); const off=(d.getDay()+6)%7; d.setDate(d.getDate()-off); return toKey(d); }
+function fmtDate(k){ const d=parseKey(k); return (d.getMonth()+1)+'月'+d.getDate()+'日 周'+'日一二三四五六'[d.getDay()]; }
+function fmtShort(k){ const d=parseKey(k); return (d.getMonth()+1)+'/'+d.getDate(); }
+function num(v){ const n=parseFloat(v); return isNaN(n)?null:n; }
+
+const defaultData = () => ({
+  settings:{
+    startDate: todayStr(),
+    goalWeight: '',
+    wakeTarget: '07:00',
+    bedTarget: '23:30',
+    trainingDays: [1,3,6],
+    readGoal: 20,
+    ladderLevel: 1
+  },
+  entries:{},
+  reviews:{},
+  books:[]
+});
+
+let db;
+try{ db = JSON.parse(localStorage.getItem(KEY)) || defaultData(); }
+catch(e){ db = defaultData(); }
+if(!db.settings) db.settings = defaultData().settings;
+if(!db.books) db.books = [];
+if(!db.settings.readGoal) db.settings.readGoal = 20;
+if(!db.settings.ladderLevel) db.settings.ladderLevel = 1;
+if(!Array.isArray(db.settings.trainingDays) || !db.settings.trainingDays.length) db.settings.trainingDays = [1,3,6];
+
+/* 同步相关状态(提前声明,避免 TDZ) */
+var syncReady = false, syncing = false, syncTimer = null;
+
+function save(){
+  // 记录分节修改时间,供跨设备合并使用
+  try{
+    const s = JSON.stringify(db.settings||{}), b = JSON.stringify(db.books||[]);
+    db._ts = db._ts || {settings:0, books:0};
+    if(typeof snapSettings!=='undefined' && s !== snapSettings){ db._ts.settings = Date.now(); snapSettings = s; }
+    if(typeof snapBooks!=='undefined' && b !== snapBooks){ db._ts.books = Date.now(); snapBooks = b; }
+  }catch(e){}
+  localStorage.setItem(KEY, JSON.stringify(db));
+  if(syncReady && !syncing) scheduleSync(2500);
+}
+
+/* ========== 习惯定义 ========== */
+const HABITS = [
+  {id:'wake',    phase:1, label:()=>'固定时间起床(目标 '+db.settings.wakeTarget+')'},
+  {id:'light',   phase:1, label:()=>'起床后 30 分钟内见光/出门 10 分钟'},
+  {id:'weigh',   phase:1, label:()=>'晨起排便后称重'},
+  {id:'protein', phase:1, label:()=>'三餐蛋白质都达标(每餐一掌心)'},
+  {id:'weekend', phase:1, label:()=>'起床时间浮动 < 1 小时(含周末)', weekendOnly:false},
+  {id:'wind',    phase:1, label:()=>'睡前 1 小时降档:灯光调暗、手机放床外'},
+  {id:'caffeine',phase:1, label:()=>'咖啡因/奶茶只在 14:00 前'},
+  {id:'train',   phase:2, label:()=>'完成今日力量训练', onlyTrainDay:true},
+  {id:'active',  phase:2, label:()=>'主动恢复:走路 20–30 分钟', onlyRestDay:true},
+  {id:'steps',   phase:2, label:()=>'步数 ≥ 8000'},
+  {id:'nosugar', phase:2, label:()=>'无含糖饮料 / 不饮酒'},
+  {id:'calorie', phase:3, label:()=>'估算热量,缺口保持 15-20%'},
+  {id:'read',   always:true, track:'growth', label:()=>'阅读 '+(db.settings.readGoal||20)+' 分钟(纸质/墨水屏,不刷手机)'},
+  {id:'assert', always:true, track:'growth', label:()=>'主动表达 / 拒绝了一次(哪怕很小)'}
+];
+
+function phaseOf(dateKey){
+  const start = db.settings.startDate || todayStr();
+  const wk = Math.floor(daysBetween(start, dateKey)/7) + 1;
+  return Math.min(3, Math.max(1, wk));
+}
+const PHASE_INFO = {
+  1:{name:'阶段 1 · 打地基', title:'只做 5 件事:固定起床、见光、称重、蛋白质、睡前降档',
+     tip:'<b>本周重点:</b>别急着加运动。先把起床时间锁死——哪怕前一晚只睡 4 小时,第二天也照常起。起床点稳了,入睡时间会自己跟上来。'},
+  2:{name:'阶段 2 · 加负荷', title:'在地基上加:每周 3 次力量训练 + 8000 步',
+     tip:'<b>本周重点:</b>训练日优先保训练,哪怕只做 20 分钟。力量训练在减脂期的作用是<b>保住肌肉</b>,让掉的是脂肪而不是体重数字。'},
+  3:{name:'阶段 3 · 精细化', title:'估算热量、每周只调一个变量、处理平台期',
+     tip:'<b>本周重点:</b>体重连续 2 周不动才算平台期。先查执行率——执行率不到 90% 就补执行,不改计划。'}
+};
+
+function isTrainDay(dateKey){ return db.settings.trainingDays.includes(parseKey(dateKey).getDay()); }
+
+function visibleHabits(dateKey){
+  const ph = phaseOf(dateKey);
+  const train = isTrainDay(dateKey);
+  return HABITS.filter(h=>{
+    if(!h.always && h.phase > ph) return false;
+    if(h.onlyTrainDay && !train) return false;
+    if(h.onlyRestDay && train) return false;
+    return true;
+  });
+}
+
+/* ========== 日期工具 ========== */
+function sleepHours(e){
+  if(!e || !e.sleepStart || !e.sleepEnd) return null;
+  const [h1,m1] = e.sleepStart.split(':').map(Number);
+  const [h2,m2] = e.sleepEnd.split(':').map(Number);
+  let mins = (h2*60+m2) - (h1*60+m1);
+  if(mins <= 0) mins += 1440;
+  const h = mins/60;
+  return (h > 16) ? null : h;   // 异常值不计入
+}
+function weekDates(mondayKey){
+  const out=[]; for(let i=0;i<7;i++) out.push(addDays(mondayKey,i)); return out;
+}
+function hasData(k){ return !!db.entries[k]; }
+
+/* ========== 提示 ========== */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ========== Tab 切换(顶部 + 底部导航共用) ========== */
+function setTab(tab){
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('active', s.id==='tab-'+tab));
+  if(tab==='today') refreshToday();
+  renderAll();
+}
+document.querySelectorAll('.tabbar').forEach(nav=>{
+  nav.addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    setTab(b.dataset.tab);
+    if(window.innerWidth<=640) window.scrollTo({top:0});
+  });
+});
+
+/* ========== 今日页 ========== */
+let curDate = todayStr();
+let assertDirty = false;   // 成长页练习表单有未保存输入时不被覆盖
+
+function renderPhase(){
+  const ph = phaseOf(curDate);
+  const info = PHASE_INFO[ph];
+  const start = db.settings.startDate;
+  const total = Math.max(1, daysBetween(start, todayStr())+1);
+  document.getElementById('phaseBanner').innerHTML =
+    '<div class="ph">第 '+Math.min(12,Math.ceil(total/7))+' 周 / 共 12 周 · '+info.name+'</div>'+
+    '<div class="pt">'+info.title+'</div>'+
+    '<div class="muted">计划开始:'+fmtDate(start)+' · 已运行 '+total+' 天</div>';
+  document.getElementById('habitPhaseNote').innerHTML =
+    '当前阶段解锁的习惯(第 '+ph+' 阶段)。没勾的不算失败,明天补上即可。';
+  document.getElementById('tipBox').innerHTML = info.tip;
+}
+
+function renderHabits(){
+  const e = db.entries[curDate] || {};
+  const habits = e.habits || {};
+  const list = visibleHabits(curDate);
+  const groups = [
+    {t:'健康 · 减脂 · 睡眠', items: list.filter(h=>h.track!=='growth')},
+    {t:'成长 · 阅读与表达', items: list.filter(h=>h.track==='growth')}
+  ];
+  document.getElementById('habitList').innerHTML = groups.filter(g=>g.items.length).map(g=>
+    '<div class="muted" style="margin:12px 0 4px;font-weight:700">'+g.t+'</div>'+
+    g.items.map(h=>{
+      const checked = !!habits[h.id];
+      let tag = '';
+      if(h.always) tag = '<span class="tag" style="background:#f1f2f4;color:#6b7688">成长</span>';
+      else if(h.phase===1) tag = '<span class="tag rest">地基</span>';
+      else if(h.phase===2) tag = '<span class="tag">加负荷</span>';
+      else tag = '<span class="tag" style="background:#fdf3e3;color:#d97706">精细</span>';
+      if(h.id==='train') tag = '<span class="tag">训练日</span>';
+      if(h.id==='active') tag = '<span class="tag rest">休息日</span>';
+      return '<label class="habit'+(checked?' done':'')+'">'+
+        '<input type="checkbox" data-h="'+h.id+'"'+(checked?' checked':'')+'>'+
+        '<span>'+h.label()+'</span>'+tag+'</label>';
+    }).join('')
+  ).join('');
+}
+
+document.getElementById('habitList').addEventListener('change', e=>{
+  const cb = e.target.closest('input[type=checkbox]'); if(!cb) return;
+  const ent = db.entries[curDate] || (db.entries[curDate]={});
+  ent.habits = ent.habits || {};
+  ent.habits[cb.dataset.h] = cb.checked;
+  ent.updated = Date.now();
+  save(); renderHabits(); renderWeekMini();
+});
+
+function fillForm(){
+  const e = db.entries[curDate] || {};
+  document.getElementById('curDateLabel').textContent = fmtDate(curDate) + (curDate===todayStr()?' · 今天':'');
+  document.getElementById('f_weight').value = e.weight ?? '';
+  document.getElementById('f_steps').value = e.steps ?? '';
+  document.getElementById('f_hunger').value = e.hunger ?? '';
+  document.getElementById('f_sleepStart').value = e.sleepStart ?? '';
+  document.getElementById('f_sleepEnd').value = e.sleepEnd ?? '';
+  document.getElementById('f_protein').value = e.protein ?? '';
+  document.getElementById('f_train').value = e.train ?? '';
+  document.getElementById('f_free').value = e.free ?? 'no';
+  document.getElementById('f_notes').value = e.notes ?? '';
+  document.getElementById('f_readMin').value = e.readMin ?? '';
+  document.getElementById('f_readPages').value = e.readPages ?? '';
+  document.getElementById('f_assert').value = e.assertDone ?? '';
+  updateSleepDur();
+  document.getElementById('saveState').textContent = e.updated ? '上次保存:'+new Date(e.updated).toLocaleTimeString('zh-CN') : '尚未记录';
+}
+
+function updateSleepDur(){
+  const h = sleepHours({sleepStart:document.getElementById('f_sleepStart').value, sleepEnd:document.getElementById('f_sleepEnd').value});
+  document.getElementById('f_sleepDur').value = h==null ? '' : (Math.floor(h)+' 小时 '+Math.round((h%1)*60)+' 分');
+}
+['f_sleepStart','f_sleepEnd'].forEach(id=>document.getElementById(id).addEventListener('input', updateSleepDur));
+
+/* 移动端自动保存:失焦即存,不用找保存按钮 */
+document.querySelectorAll('#tab-today input, #tab-today select, #tab-today textarea').forEach(el=>{
+  if(el.type==='checkbox') return;
+  el.addEventListener('change', ()=>saveEntry(true));
+});
+
+document.getElementById('saveEntry').addEventListener('click', ()=>saveEntry(false));
+function saveEntry(silent){
+  const e = db.entries[curDate] || (db.entries[curDate]={});
+  const w = num(document.getElementById('f_weight').value);
+  if(w !== null){ if(w<30||w>250){ toast('体重数值看起来不对,请检查'); return; } e.weight = w; }
+  else delete e.weight;
+  const st = num(document.getElementById('f_steps').value);  if(st!==null) e.steps = st; else delete e.steps;
+  const hg = num(document.getElementById('f_hunger').value); if(hg!==null) e.hunger = hg; else delete e.hunger;
+  e.sleepStart = document.getElementById('f_sleepStart').value || '';
+  e.sleepEnd   = document.getElementById('f_sleepEnd').value || '';
+  e.protein = document.getElementById('f_protein').value;
+  e.train   = document.getElementById('f_train').value;
+  e.free    = document.getElementById('f_free').value;
+  e.notes   = document.getElementById('f_notes').value;
+  const rm = num(document.getElementById('f_readMin').value);
+  if(rm!==null) e.readMin = rm; else delete e.readMin;
+  const rp = num(document.getElementById('f_readPages').value);
+  if(rp!==null) e.readPages = rp; else delete e.readPages;
+  e.assertDone = document.getElementById('f_assert').value;
+  e.updated = Date.now();
+  save(); fillForm(); renderWeekMini();
+  document.getElementById('saveState').textContent = '已保存 '+new Date().toLocaleTimeString('zh-CN');
+  if(!silent) toast('已保存 '+fmtDate(curDate));
+}
+
+function gotoDate(k){
+  curDate = k;
+  assertDirty = false;
+  refreshToday();
+  renderGrowth();
+}
+document.getElementById('prevDay').onclick = ()=>gotoDate(addDays(curDate,-1));
+document.getElementById('nextDay').onclick = ()=>gotoDate(addDays(curDate, 1));
+document.getElementById('todayBtn').onclick  = ()=>gotoDate(todayStr());
+function refreshToday(){ renderPhase(); renderHabits(); fillForm(); renderWeekMini(); }
+
+function renderWeekMini(){
+  const mon = mondayOf(curDate);
+  const days = weekDates(mon);
+  let done=0, total=0, trained=0, sleepSum=0, sleepN=0;
+  days.forEach(k=>{
+    const e = db.entries[k]; if(!e) return;
+    visibleHabits(k).forEach(h=>{ total++; if(e.habits && e.habits[h.id]) done++; });
+    if(e.train==='done') trained++;
+    const sh = sleepHours(e); if(sh!==null){ sleepSum+=sh; sleepN++; }
+  });
+  const adh = total? Math.round(done/total*100):null;
+  const rows = [
+    ['习惯完成率', adh===null?'—':adh+'%', adh===null?'':(adh>=80?'down':'up')],
+    ['力量训练', trained+' / '+db.settings.trainingDays.length+' 次', 'flat'],
+    ['平均睡眠', sleepN? (sleepSum/sleepN).toFixed(1)+' h':'—', 'flat'],
+    ['本周有记录', days.filter(hasData).length+' / 7 天', 'flat']
+  ];
+  document.getElementById('weekMini').innerHTML = rows.map(r=>
+    '<div class="stat"><div class="k">'+r[0]+'</div><div class="v '+r[2]+'" style="font-size:18px">'+r[1]+'</div></div>'
+  ).join('');
+}
+
+/* ========== 数据页 ========== */
+function allWeightDays(){
+  return Object.keys(db.entries).filter(k=>db.entries[k].weight!=null).sort();
+}
+function movingAvg(days){
+  return days.map(k=>{
+    const from = addDays(k,-6);
+    const vals = allWeightDays().filter(x=>x>=from && x<=k).map(x=>db.entries[x].weight);
+    return {d:k, v: vals.reduce((a,b)=>a+b,0)/vals.length};
+  });
+}
+
+function lineChart(opts){
+  const {points, goal, w=760, h=280, unit='kg'} = opts;
+  const pad = {l:46, r:16, t:14, b:30};
+  if(points.length < 2) return '<p class="muted">至少记录 2 天体重后显示趋势图。</p>';
+  const xs = points.map(p=>parseKey(p.d).getTime());
+  const vs = points.map(p=>p.v).concat(goal?[parseFloat(goal)]:[]);
+  let min = Math.min(...vs), max = Math.max(...vs);
+  if(max-min < 2){ const c=(max+min)/2; min=c-1.5; max=c+1.5; }
+  const padY = (max-min)*0.12; min-=padY; max+=padY;
+  const X = t => pad.l + (t-xs[0])/((xs[xs.length-1]-xs[0])||1) * (w-pad.l-pad.r);
+  const Y = v => pad.t + (1-(v-min)/(max-min)) * (h-pad.t-pad.b);
+  let s = '<svg class="chart" viewBox="0 0 '+w+' '+h+'">';
+  // 网格 + y 轴
+  for(let i=0;i<=4;i++){
+    const v = min + (max-min)*i/4, y = Y(v);
+    s += '<line x1="'+pad.l+'" y1="'+y+'" x2="'+(w-pad.r)+'" y2="'+y+'" stroke="#eef1f5"/>';
+    s += '<text x="'+(pad.l-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#9aa4b2">'+v.toFixed(1)+'</text>';
+  }
+  // x 轴标签
+  const ticks = [0, Math.floor((points.length-1)/2), points.length-1];
+  [...new Set(ticks)].forEach(i=>{
+    s += '<text x="'+X(xs[i])+'" y="'+(h-8)+'" text-anchor="middle" font-size="11" fill="#9aa4b2">'+fmtShort(points[i].d)+'</text>';
+  });
+  // 目标线
+  if(goal && parseFloat(goal)){
+    const g = parseFloat(goal);
+    if(g>=min && g<=max){
+      s += '<line x1="'+pad.l+'" y1="'+Y(g)+'" x2="'+(w-pad.r)+'" y2="'+Y(g)+'" stroke="#d97706" stroke-dasharray="6 5"/>';
+      s += '<text x="'+(w-pad.r)+'" y="'+(Y(g)-6)+'" text-anchor="end" font-size="11" fill="#d97706">目标 '+g+' kg</text>';
+    }
+  }
+  // 原始点线
+  const raw = points.map((p,i)=>X(xs[i])+','+Y(p.v)).join(' ');
+  s += '<polyline points="'+raw+'" fill="none" stroke="#cbd5e1" stroke-width="2"/>';
+  points.forEach((p,i)=>{ s += '<circle cx="'+X(xs[i])+'" cy="'+Y(p.v)+'" r="2.6" fill="#b6bfcb"/>'; });
+  // 平均线
+  const avg = movingAvg(points.map(p=>p.d));
+  const avgPts = avg.map((p,i)=>X(xs[i])+','+Y(p.v)).join(' ');
+  s += '<polyline points="'+avgPts+'" fill="none" stroke="#0f9d76" stroke-width="2.8" stroke-linejoin="round"/>';
+  s += '</svg>';
+  return s;
+}
+
+function barChart(items, opts){
+  const {w=760, h=240, min=0, max=10, band=null, unit='', pct=false} = opts;
+  const pad = {l:44, r:14, t:12, b:34};
+  if(!items.length) return '<p class="muted">暂无数据。</p>';
+  const bw = (w-pad.l-pad.r)/items.length;
+  const Y = v => pad.t + (1-(v-min)/(max-min))*(h-pad.t-pad.b);
+  let s = '<svg class="chart" viewBox="0 0 '+w+' '+h+'">';
+  if(band){
+    s += '<rect x="'+pad.l+'" y="'+Y(band[1])+'" width="'+(w-pad.l-pad.r)+'" height="'+(Y(band[0])-Y(band[1]))+'" fill="#e6f6f1"/>';
+  }
+  for(let i=0;i<=4;i++){
+    const v = min+(max-min)*i/4, y=Y(v);
+    s += '<line x1="'+pad.l+'" y1="'+y+'" x2="'+(w-pad.r)+'" y2="'+y+'" stroke="#eef1f5"/>';
+    s += '<text x="'+(pad.l-7)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#9aa4b2">'+(pct? Math.round(v)+'%' : (Number.isInteger(v)?v:v.toFixed(1)))+'</text>';
+  }
+  items.forEach((it,i)=>{
+    const x = pad.l + i*bw;
+    const y = Y(Math.max(min,it.v));
+    const bh = Math.max(0, Y(min)-y);
+    s += '<rect x="'+(x+bw*0.18)+'" y="'+y+'" width="'+(bw*0.64)+'" height="'+bh+'" rx="3" fill="'+(it.color||'#2563eb')+'"/>';
+    if(it.label && (items.length<=16 || i%Math.ceil(items.length/10)===0)){
+      s += '<text x="'+(x+bw/2)+'" y="'+(h-12)+'" text-anchor="middle" font-size="10" fill="#9aa4b2">'+it.label+'</text>';
+    }
+    if(it.tip) s += '<title>'+it.tip+'</title>';
+  });
+  s += '</svg>';
+  return s;
+}
+
+function renderData(){
+  // 统计卡
+  const wDays = allWeightDays();
+  const goal = db.settings.goalWeight;
+  let cards = [];
+  if(wDays.length>=7){
+    const first7 = wDays.slice(0,7), last7 = wDays.slice(-7);
+    const avg = a => a.reduce((s,k)=>s+db.entries[k].weight,0)/a.length;
+    const startAvg = avg(first7), nowAvg = avg(last7), diff = nowAvg-startAvg;
+    const wk = diff/Math.max(1,(daysBetween(first7[0],last7[last7.length-1])+1)/7);
+    cards.push(card('近 7 天平均', nowAvg.toFixed(1)+' kg',
+      '<span class="'+(diff<0?'down':diff>0?'up':'flat')+'">'+(diff>0?'+':'')+diff.toFixed(1)+' kg</span> 自开始 · '+wk.toFixed(2)+' kg/周'));
+    const pctLoss = startAvg>0 ? (diff/startAvg*100) : 0;
+    cards.push(card('减重进度', goal? (Math.min(100,Math.max(0,(startAvg-nowAvg)/Math.max(0.1,(startAvg-parseFloat(goal)))*100))).toFixed(0)+'%':'—',
+      goal? ('目标 '+goal+' kg · 还差 '+Math.max(0,(nowAvg-parseFloat(goal))).toFixed(1)+' kg'):'在设置里填写目标体重'));
+  } else {
+    cards.push(card('近 7 天平均','—','至少记录 7 天'));
+  }
+  // 睡眠
+  const recent = Object.keys(db.entries).sort().slice(-14).map(k=>sleepHours(db.entries[k])).filter(x=>x!==null);
+  if(recent.length){
+    const avgS = recent.reduce((a,b)=>a+b,0)/recent.length;
+    cards.push(card('近 14 次平均睡眠', avgS.toFixed(1)+' h',
+      '<span class="'+(avgS>=7?'down':avgS>=6?'flat':'up')+'">'+(avgS>=7?'达标':avgS>=6?'偏少':'严重不足')+'</span> · 目标 7–9 h'));
+  } else cards.push(card('近 14 次平均睡眠','—','记录上床/起床时间'));
+  // 连续记录
+  let streak=0; let k=todayStr();
+  while(hasData(k)){ streak++; k=addDays(k,-1); }
+  const weekAdh = (()=>{ const mon=mondayOf(todayStr()); let d=0,t=0;
+    weekDates(mon).forEach(x=>{ const e=db.entries[x]; if(!e) return;
+      visibleHabits(x).forEach(h=>{t++; if(e.habits&&e.habits[h.id]) d++;}); });
+    return t? Math.round(d/t*100):null; })();
+  cards.push(card('连续记录', streak+' 天', streak>=7?'<span class="down">很好,保持</span>':'断 1 天不算失败,不断 2 天'));
+  cards.push(card('本周执行率', weekAdh===null?'—':weekAdh+'%', weekAdh===null?'—':(weekAdh>=80?'<span class="down">及格线以上</span>':'<span class="up">低于 80%,先补执行</span>')));
+  cards.push(card('已记录天数', Object.keys(db.entries).length+' 天', '共 12 周 84 天'));
+
+  // 成长线统计
+  const monK = mondayOf(todayStr());
+  let readSum = 0;
+  weekDates(monK).forEach(x=>{ const e2 = db.entries[x]; if(e2 && e2.readMin) readSum += e2.readMin; });
+  const readGoalW = (db.settings.readGoal||20)*7;
+  cards.push(card('本周阅读', readSum+' 分钟', readSum>=readGoalW? '<span class="down">达标</span> · 目标 '+readGoalW+' 分钟' : '目标 '+readGoalW+' 分钟 · 还差 '+Math.max(0,readGoalW-readSum)));
+  const cut30 = addDays(todayStr(),-29);
+  const assertDays = Object.keys(db.entries).filter(k2=>k2>=cut30 && db.entries[k2].assert && db.entries[k2].assert.scene);
+  cards.push(card('表达练习(30 天)', assertDays.length+' 次', assertDays.length>=12? '<span class="down">保持住</span>' : '目标 ≥ 12 次/月 · 每周 3 次'));
+
+  document.getElementById('statCards').innerHTML = cards.join('');
+
+  // 体重图
+  const pts = wDays.map(k=>({d:k, v:db.entries[k].weight}));
+  document.getElementById('chartWeight').innerHTML = lineChart({points:pts, goal:goal});
+  if(pts.length>=2){
+    const avg = movingAvg(pts.map(p=>p.d));
+    const last = avg[avg.length-1];
+    document.getElementById('weightNote').innerHTML =
+      '当前 7 天平均线:<b>'+last.v.toFixed(1)+' kg</b>。'+
+      '每天的原始体重上下跳 1–2kg 全是水和食物残渣,<b>只看绿色这条线</b>。'+
+      '合理速度是每周降 0.5–1%(约 '+(last.v*0.005).toFixed(2)+'–'+(last.v*0.01).toFixed(2)+' kg)。';
+  } else document.getElementById('weightNote').textContent='';
+
+  // 睡眠图
+  const all = Object.keys(db.entries).sort();
+  const last30 = all.slice(-30);
+  const sleepItems = last30.map(k=>{
+    const h = sleepHours(db.entries[k]);
+    return h===null? null : {v:h, label:fmtShort(k), color: h>=7? '#2563eb' : h>=6? '#7aa2f7':'#f87171', tip:fmtDate(k)+' · '+h.toFixed(1)+' 小时'};
+  }).filter(Boolean);
+  document.getElementById('chartSleep').innerHTML = barChart(sleepItems, {min:0, max:12, band:[7,9], h:230});
+
+  // 执行率图(近 8 周)
+  const adhItems = [];
+  let mon = mondayOf(todayStr());
+  for(let i=7;i>=0;i--){
+    const m = addDays(mon, -7*i);
+    let d=0,t=0, recorded=0;
+    weekDates(m).forEach(x=>{ const e=db.entries[x]; if(!e) return; recorded++;
+      visibleHabits(x).forEach(h=>{t++; if(e.habits&&e.habits[h.id]) d++;}); });
+    adhItems.push({v: t? Math.round(d/t*100):0, label:fmtShort(m),
+      color: t&&d/t>=0.8? '#0f9d76':'#d97706', tip:fmtShort(m)+' 起当周 · 记录 '+recorded+' 天 · 完成 '+(t?Math.round(d/t*100):0)+'%'});
+  }
+  document.getElementById('chartAdh').innerHTML = barChart(adhItems, {min:0, max:100, pct:true, h:230});
+
+  // 训练记录
+  const trainItems = all.slice(-42).map(k=>{
+    const v = db.entries[k].train;
+    const map = {done:1, half:0.5, none:0, rest:-1};
+    const val = map[v];
+    if(val===undefined || val===-1) return null;
+    return {v:val, label:fmtShort(k), color: val===1? '#0f9d76': val===0.5? '#d97706':'#e05252',
+      tip: fmtDate(k)+' · '+(v==='done'?'完成':v==='half'?'部分完成':'没做')};
+  }).filter(Boolean);
+  document.getElementById('chartTrain').innerHTML = trainItems.length
+    ? barChart(trainItems, {min:0, max:1, h:180}) + '<p class="muted">绿=完成 · 黄=部分 · 红=没做。阶段 2 起生效,目标每周 '+db.settings.trainingDays.length+' 次绿。</p>'
+    : '<p class="muted">第 5 周开始记录力量训练。</p>';
+
+  // 阅读图
+  const readItems = Object.keys(db.entries).sort().slice(-30).map(k=>{
+    const m = db.entries[k].readMin;
+    return (m==null || m<=0) ? null :
+      {v:m, label:fmtShort(k), color: m >= (db.settings.readGoal||20) ? '#0f9d76':'#7aa2f7',
+       tip:fmtDate(k)+' · '+m+' 分钟'};
+  }).filter(Boolean);
+  const maxRead = Math.max(60, ...readItems.map(i=>i.v));
+  document.getElementById('chartRead').innerHTML = readItems.length
+    ? barChart(readItems, {min:0, max:maxRead, h:180}) +
+      '<p class="muted">绿=达到每日目标('+ (db.settings.readGoal||20) +' 分钟) · 蓝=有读但不足。目标:连续不断。</p>'
+    : '<p class="muted">在"今日"或"成长"页记录阅读时长后显示。规则:每天 20 分钟,断 1 天不断 2 天。</p>';
+}
+function card(k,v,d){ return '<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>'; }
+
+/* ========== 复盘页 ========== */
+let curWeek = mondayOf(todayStr());
+function weekList(){
+  const start = mondayOf(db.settings.startDate);
+  const out=[]; let m=start; const now = mondayOf(todayStr());
+  while(m <= now){ out.push(m); m = addDays(m,7); }
+  return out.reverse();
+}
+function weekStats(mon){
+  const days = weekDates(mon);
+  let wSum=0,wN=0,sSum=0,sN=0,tr=0,d=0,t=0,rec=0;
+  days.forEach(k=>{
+    const e = db.entries[k]; if(!e) return; rec++;
+    if(e.weight!=null){ wSum+=e.weight; wN++; }
+    const sh = sleepHours(e); if(sh!==null){ sSum+=sh; sN++; }
+    if(e.train==='done') tr++;
+    visibleHabits(k).forEach(h=>{ t++; if(e.habits&&e.habits[h.id]) d++; });
+  });
+  return {days:rec, weight: wN? wSum/wN:null, sleep: sN? sSum/sN:null, trained:tr, adh: t? Math.round(d/t*100):null};
+}
+function renderReview(){
+  const list = weekList();
+  if(!list.includes(curWeek)) curWeek = list[0] || mondayOf(todayStr());
+  document.getElementById('weekList').innerHTML = list.map(m=>{
+    const s = weekStats(m);
+    return '<div class="week-item'+(m===curWeek?' sel':'')+'" data-w="'+m+'">'+
+      '<span><b>'+fmtShort(m)+' – '+fmtShort(addDays(m,6))+'</b> 第 '+(Math.floor(daysBetween(mondayOf(db.settings.startDate),m)/7)+1)+' 周</span>'+
+      '<span class="muted">'+(s.weight? s.weight.toFixed(1)+'kg · ':'')+(s.sleep? s.sleep.toFixed(1)+'h · ':'')+(s.adh!==null? s.adh+'%':'无记录')+'</span></div>';
+  }).join('');
+  loadReview();
+}
+document.getElementById('weekList').addEventListener('click', e=>{
+  const it = e.target.closest('.week-item'); if(!it) return;
+  curWeek = it.dataset.w; renderReview();
+});
+function loadReview(){
+  const r = db.reviews[curWeek] || {};
+  document.getElementById('reviewTitle').textContent = '周复盘:'+fmtShort(curWeek)+' – '+fmtShort(addDays(curWeek,6));
+  const s = weekStats(curWeek);
+  const rows = [
+    ['平均体重', s.weight? s.weight.toFixed(1)+' kg':'—'],
+    ['平均睡眠', s.sleep? s.sleep.toFixed(1)+' h':'—'],
+    ['力量训练', s.trained+' / '+db.settings.trainingDays.length],
+    ['记录天数', s.days+' / 7'],
+    ['执行率', s.adh===null?'—':s.adh+'%'],
+    ['上一周对比', compareWeek(curWeek)]
+  ];
+  document.getElementById('reviewStats').innerHTML = rows.map(x=>card(x[0],x[1],'')).join('');
+  document.getElementById('r_good').value = r.good||'';
+  document.getElementById('r_bad').value = r.bad||'';
+  document.getElementById('r_next').value = r.next||'';
+  document.getElementById('r_rate').value = r.rate||'';
+  document.getElementById('reviewState').textContent = r.saved? '已保存':'';
+}
+function compareWeek(mon){
+  const a = weekStats(addDays(mon,-7)), b = weekStats(mon);
+  if(a.weight===null||b.weight===null) return '—';
+  const d = b.weight-a.weight;
+  return (d>0?'+':'')+d.toFixed(1)+' kg';
+}
+document.getElementById('saveReview').onclick = ()=>{
+  db.reviews[curWeek] = {
+    good: document.getElementById('r_good').value,
+    bad:  document.getElementById('r_bad').value,
+    next: document.getElementById('r_next').value,
+    rate: document.getElementById('r_rate').value,
+    saved: Date.now()
+  };
+  save(); loadReview(); toast('本周复盘已保存');
+};
+
+/* ========== 设置页 ========== */
+const DAY_CN = ['日','一','二','三','四','五','六'];
+function renderSettings(){
+  const s = db.settings;
+  document.getElementById('s_start').value = s.startDate;
+  document.getElementById('s_goal').value = s.goalWeight||'';
+  document.getElementById('s_wake').value = s.wakeTarget||'07:00';
+  document.getElementById('s_bed').value = s.bedTarget||'23:30';
+  document.getElementById('s_trainDays').innerHTML = [1,2,3,4,5,6,0].map(d=>
+    '<button type="button" class="btn '+(s.trainingDays.includes(d)?'':'ghost')+' sm" data-d="'+d+'">周'+DAY_CN[d]+'</button>'
+  ).join('');
+}
+document.getElementById('s_trainDays').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  const d = +b.dataset.d;
+  const arr = db.settings.trainingDays;
+  const i = arr.indexOf(d);
+  if(i>=0){ if(arr.length<=1){ toast('至少保留一个训练日'); return; } arr.splice(i,1); } else arr.push(d);
+  arr.sort(); save(); renderSettings();
+});
+document.getElementById('saveSettings').onclick = ()=>{
+  db.settings.startDate = document.getElementById('s_start').value || todayStr();
+  db.settings.goalWeight = document.getElementById('s_goal').value;
+  db.settings.wakeTarget = document.getElementById('s_wake').value || '07:00';
+  db.settings.bedTarget  = document.getElementById('s_bed').value || '23:30';
+  save(); renderAll(); toast('设置已保存');
+};
+document.getElementById('exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '健康计划备份-'+todayStr()+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('备份已导出');
+};
+document.getElementById('importBtn').onclick = ()=>document.getElementById('importFile').click();
+document.getElementById('importFile').addEventListener('change', ev=>{
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      if(!data.settings || !data.entries) throw 0;
+      db = data; save(); renderAll(); toast('导入成功');
+    }catch(e){ toast('文件格式不对,导入失败'); }
+  };
+  r.readAsText(f);
+});
+document.getElementById('clearBtn').onclick = ()=>{
+  if(confirm('确定清空全部记录?此操作不可恢复,建议先导出备份。')){
+    db = defaultData(); save(); curDate=todayStr(); curWeek=mondayOf(todayStr()); renderAll(); toast('已清空');
+  }
+};
+
+/* ========== 成长页 ========== */
+const LADDER = [
+  {t:'L1 · 零风险拒绝',      d:'拒绝推销电话、店员推销、发传单。说"不需要"直接走。', hint:'练的是:拒绝可以不给理由。'},
+  {t:'L2 · 提出自己的要求',  d:'点餐要少辣、退换货直接说"帮我换一个"、买东西要发票或抹零。', hint:'练的是:说出"我要什么",而不是"随便"。'},
+  {t:'L3 · 拒绝小请求',      d:'同事朋友的小帮忙、拼单、带饭、临时借东西。话术:"这次不方便。"', hint:'只说结论,不解释。解释 = 给对方谈判的入口。'},
+  {t:'L4 · 拒绝消耗型邀请(主战场)', d:'酒局、夜宵、通宵开黑、劝奶茶劝酒。', hint:'直接关系你的减脂和睡眠。每周至少成功拒绝 2 次。'},
+  {t:'L5 · 表达不同意见',    d:'会议/群里说"我有不同看法";朋友提议你不同意时讲出真话。', hint:'先肯定再补充:"这个思路可以,同时我担心……"'},
+  {t:'L6 · 拒绝额外职责 / 谈条件', d:'推掉不属于你的活、拒绝临时加班、谈加薪或调休。', hint:'用交换而非拒绝:"我可以做,但 A 得往后延。"'},
+  {t:'L7 · 处理冲突与表达不满', d:'对越界行为当面提:"当……发生时我不舒服,我希望……"', hint:'不发火、不翻旧账,只讲事实 + 感受 + 诉求。'}
+];
+
+const SCRIPTS = [
+  {s:'不给理由的拒绝',       t:'"这次不行,谢谢。"', n:'拒绝不需要理由。理由一给,对方就会开始讨价还价。'},
+  {s:'延迟回应(打断自动答应)', t:'"我先看一下安排,晚点回复你。"', n:'给自己 10 分钟冷静再回。90% 的事你都会想清楚。'},
+  {s:'拒绝夜宵 / 酒局',      t:'"我就不去了,最近在调整作息,你们玩得开心。"', n:'不道歉、不自责。说一次就够,不必解释第二遍。'},
+  {s:'拒绝劝酒劝奶茶',       t:'"我今天不喝,身体在恢复期。"', n:'对方劝 2 次是礼貌,你答 2 次也是礼貌。第 3 次开始微笑不接话。'},
+  {s:'拒绝额外任务',         t:'"我手上是 A 和 B,再加一件两件都得耽误。你希望我优先哪个?"', n:'把难题还回去,让对方做取舍,而不是你硬扛。'},
+  {s:'表达不满(非暴力沟通)', t:'"当……(事实)发生时,我感到……(感受),我希望……(诉求)。"', n:'只讲事实,不说"你总是",对方才听得进去。'},
+  {s:'退出无解的争论',       t:'"这件事我们看法不一样,先放一放,回头再聊。"', n:'不是所有争论都值得赢。保护自己的精力也是边界。'}
+];
+
+const RECOMMENDED = [
+  {t:'掌控习惯', a:'詹姆斯·克利尔', p:320, why:'习惯系统的底层方法——本 12 周计划的理论地基'},
+  {t:'我们为什么要睡觉', a:'马修·沃克', p:368, why:'看懂睡眠为什么必须排在减脂前面'},
+  {t:'被讨厌的勇气', a:'岸见一郎 / 古贺史健', p:320, why:'治"太在意别人怎么看"——拒绝训练的理论课'},
+  {t:'非暴力沟通', a:'马歇尔·卢森堡', p:240, why:'表达诉求而不引发冲突的完整框架'},
+  {t:'关键对话', a:'科里·帕特森 等', p:288, why:'高风险、带情绪的对话到底怎么开口'},
+  {t:'减肥不是挨饿,而是与食物合作', a:'丽丝·拉尔蒂', p:280, why:'与食物和解,避免节食—暴食循环'}
+];
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function readStreak(){
+  let n = 0, k = todayStr();
+  if(!((db.entries[k]||{}).readMin > 0)) k = addDays(k,-1);   // 今天还没读不算断
+  while((db.entries[k]||{}).readMin > 0){ n++; k = addDays(k,-1); }
+  return n;
+}
+
+function renderBooks(){
+  const books = db.books;
+  const el = document.getElementById('g_bookList');
+  if(!books.length){
+    el.innerHTML = '<p class="muted">书单还是空的。从下方推荐书单加一本,或手动添加——<b>一次只读 1 本</b>,读完再开下本。</p>';
+    return;
+  }
+  el.innerHTML = books.map((b,i)=>{
+    const page = Math.min(b.page||0, b.pages||0);
+    const pct = b.pages ? Math.min(100, Math.round(page/b.pages*100)) : 0;
+    return '<div class="book"><div class="bt">'+
+      '<div><b>'+esc(b.title)+'</b>'+(b.author?' <span class="muted">'+esc(b.author)+'</span>':'')+
+        (b.done?' <span class="pill">已读完</span>':'')+'</div>'+
+      '<div class="ops">'+
+        (b.pages? '<input type="number" data-p="'+i+'" value="'+page+'" min="0" max="'+b.pages+'" title="当前页码">'+
+                  '<span class="muted">'+page+'/'+b.pages+' · '+pct+'%</span>':'<span class="muted">页数未填</span>')+
+        '<button class="btn ghost sm" data-done="'+i+'">'+(b.done?'取消完成':'标为读完')+'</button>'+
+        '<button class="btn ghost sm" data-del="'+i+'">删除</button>'+
+      '</div></div>'+
+      (b.pages? '<div class="progress"><i style="width:'+pct+'%"></i></div>':'')+
+    '</div>';
+  }).join('');
+}
+
+document.getElementById('g_bookList').addEventListener('click', e=>{
+  const d = e.target.closest('button[data-done]'), x = e.target.closest('button[data-del]');
+  if(d){ const b = db.books[+d.dataset.done]; b.done = !b.done; if(b.done) b.page = b.pages||b.page; save(); renderGrowth(); toast(b.done?'已标记读完':'已取消完成'); }
+  if(x){ if(!confirm('从书单删除这本书?')) return; db.books.splice(+x.dataset.del,1); save(); renderGrowth(); }
+});
+document.getElementById('g_bookList').addEventListener('change', e=>{
+  const p = e.target.closest('input[data-p]'); if(!p) return;
+  const b = db.books[+p.dataset.p];
+  b.page = Math.max(0, Math.min(num(p.value)||0, b.pages||1e9));
+  if(b.pages && b.page >= b.pages) b.done = true;
+  save(); renderGrowth();
+});
+
+document.getElementById('g_addBook').onclick = ()=>{
+  const t = document.getElementById('g_bTitle').value.trim();
+  const p = num(document.getElementById('g_bPages').value);
+  if(!t){ toast('先填书名'); return; }
+  if(db.books.some(b=>b.title===t)){ toast('这本书已经在书单里了'); return; }
+  db.books.push({title:t, pages:p||0, page:0, done:false, added:todayStr()});
+  document.getElementById('g_bTitle').value = '';
+  document.getElementById('g_bPages').value = '';
+  save(); renderGrowth(); toast('已加入书单');
+};
+
+document.getElementById('g_reco').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-r]'); if(!b) return;
+  const r = RECOMMENDED[+b.dataset.r];
+  if(db.books.some(x=>x.title===r.t)){ toast('这本书已经在书单里了'); return; }
+  db.books.push({title:r.t, author:r.a, pages:r.p, page:0, done:false, added:todayStr()});
+  save(); renderGrowth(); toast('已加入:'+r.t);
+});
+
+document.getElementById('g_saveRead').onclick = ()=>{
+  const e = db.entries[curDate] || (db.entries[curDate]={});
+  const rm = num(document.getElementById('g_readMin').value);
+  const rp = num(document.getElementById('g_readPages').value);
+  if(rm!==null) e.readMin = Math.max(0,rm); else delete e.readMin;
+  if(rp!==null) e.readPages = Math.max(0,rp); else delete e.readPages;
+  e.habits = e.habits || {};
+  if(rm!==null && rm>0) e.habits.read = true; else delete e.habits.read;
+  e.updated = Date.now();
+  save(); fillForm(); refreshToday(); renderGrowth(); renderData();
+  toast('阅读已记录:'+fmtDate(curDate));
+};
+
+document.getElementById('g_readGoal').addEventListener('change', ()=>{
+  const v = num(document.getElementById('g_readGoal').value);
+  if(v && v>=5){ db.settings.readGoal = Math.round(v); save(); refreshToday(); renderGrowth(); }
+});
+
+document.getElementById('g_saveAssert').onclick = ()=>{
+  const scene = document.getElementById('g_aScene').value.trim();
+  if(!scene){ toast('至少填一下场景:对谁、什么事'); return; }
+  const e = db.entries[curDate] || (db.entries[curDate]={});
+  e.assert = {
+    scene,
+    said: document.getElementById('g_aSaid').value.trim(),
+    diff: num(document.getElementById('g_aDiff').value),
+    result: document.getElementById('g_aResult').value,
+    ts: Date.now()
+  };
+  e.assertDone = 'done';
+  e.habits = e.habits || {};
+  e.habits.assert = true;
+  e.updated = Date.now();
+  save(); fillForm(); refreshToday();
+  assertDirty = false;
+  renderGrowth(); renderData();
+  toast('练习已记录,这是第 '+Object.keys(db.entries).filter(k=>db.entries[k].assert).length+' 次');
+};
+
+document.getElementById('g_level').addEventListener('change', e=>{
+  db.settings.ladderLevel = Math.max(1, Math.min(7, +e.target.value));
+  save(); renderGrowth();
+});
+
+function renderGrowth(){
+  const goal = db.settings.readGoal || 20;
+  const lvl = db.settings.ladderLevel || 1;
+  document.getElementById('g_readGoal').value = goal;
+  document.getElementById('g_dateLabel').textContent = fmtDate(curDate);
+  const e = db.entries[curDate] || {};
+  document.getElementById('g_readMin').value = e.readMin ?? '';
+  document.getElementById('g_readPages').value = e.readPages ?? '';
+
+  // 统计卡
+  const monK = mondayOf(todayStr());
+  let readSum = 0;
+  weekDates(monK).forEach(k=>{ const x = db.entries[k]; if(x && x.readMin) readSum += x.readMin; });
+  const doneBooks = db.books.filter(b=>b.done).length;
+  const cut = addDays(todayStr(),-29);
+  const aN = Object.keys(db.entries).filter(k=>k>=cut && db.entries[k].assert && db.entries[k].assert.scene).length;
+  const diffs = Object.keys(db.entries).filter(k=>k>=cut).map(k=>(db.entries[k].assert||{}).diff).filter(v=>v!=null);
+  const avgDiff = diffs.length ? (diffs.reduce((a,b)=>a+b,0)/diffs.length) : null;
+  const st = readStreak();
+  document.getElementById('g_stats').innerHTML = [
+    card('本周阅读', readSum+' 分钟', '目标 '+goal*7+' 分钟'),
+    card('连续阅读', st+' 天', st>=7?'<span class="down">习惯正在成形</span>':'断 1 天不算失败,不断 2 天'),
+    card('已读完', doneBooks+' 本', '书单共 '+db.books.length+' 本'),
+    card('表达练习(30 天)', aN+' 次', aN>=12?'<span class="down">达标(每周 3 次)</span>':'目标 ≥ 12 次/月'),
+    card('当前阶梯', '第 '+lvl+' 级', esc((LADDER[lvl-1].t.split(' · ')[1]||''))),
+    card('练习平均难度', avgDiff? avgDiff.toFixed(1)+' / 10':'—', '降到 4 分以下就升一级')
+  ].join('');
+
+  // 阶梯
+  document.getElementById('g_level').innerHTML = LADDER.map((l,i)=>
+    '<option value="'+(i+1)+'"'+((i+1)===lvl?' selected':'')+'>第 '+(i+1)+' 级 · '+esc(l.t.split(' · ')[1]||l.t)+'</option>').join('');
+  document.getElementById('g_ladder').innerHTML = LADDER.map((l,i)=>{
+    const n = i+1;
+    const cls = n < lvl ? 'done' : (n===lvl ? 'now' : '');
+    return '<div class="ladder-item '+cls+'"><b>'+esc(l.t)+'</b>'+
+      (n===lvl?' <span class="pill w">进行中</span>':(n<lvl?' <span class="pill">已过</span>':''))+
+      '<div class="muted">'+esc(l.d)+'</div><div class="muted" style="color:#0f9d76">'+esc(l.hint)+'</div></div>';
+  }).join('');
+
+  // 计划页阶梯表
+  const pl = document.getElementById('planLadder');
+  if(pl) pl.innerHTML = '<table><tr><th>级别</th><th>练什么</th><th>要点</th></tr>'+
+    LADDER.map((l,i)=>'<tr'+((i+1)===lvl?' style="background:#fdf6e9"':'')+
+      '><td style="white-space:nowrap"><b>'+esc(l.t)+'</b></td><td>'+esc(l.d)+'</td><td>'+esc(l.hint)+'</td></tr>').join('')+
+    '</table><p class="muted">高亮行 = 你当前所在的级别。级别只升不降,但哪次翻车退回上一级也正常。</p>';
+
+  // 话术
+  document.getElementById('g_scripts').innerHTML = SCRIPTS.map(s=>
+    '<div class="script"><div class="s-title">'+esc(s.s)+'</div>'+
+    '<div class="s-say">'+esc(s.t)+'</div><div class="muted">'+esc(s.n)+'</div></div>').join('');
+
+  // 推荐书单
+  document.getElementById('g_reco').innerHTML = RECOMMENDED.map((r,i)=>{
+    const inList = db.books.some(b=>b.title===r.t);
+    return '<div class="reco"><div><b>'+esc(r.t)+'</b> <span class="muted">'+esc(r.a)+' · '+r.p+' 页</span>'+
+      '<div class="muted">'+esc(r.why)+'</div></div>'+
+      '<button class="btn '+(inList?'ghost':'')+' sm" data-r="'+i+'"'+(inList?' disabled style="opacity:.5"':'')+'>'+(inList?'已在书单':'加入')+'</button></div>';
+  }).join('');
+
+  // 今日练习表单(有未保存输入时不覆盖)
+  if(!assertDirty){
+    const a = e.assert || {};
+    document.getElementById('g_aScene').value = a.scene || '';
+    document.getElementById('g_aSaid').value = a.said || '';
+    document.getElementById('g_aDiff').value = a.diff ?? '';
+    document.getElementById('g_aResult').value = a.result || '';
+  }
+
+  renderBooks();
+}
+
+['g_aScene','g_aSaid','g_aDiff','g_aResult'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('input', ()=>{ assertDirty = true; });
+  el.addEventListener('change', ()=>{ assertDirty = true; });
+});
+
+/* ========== 云同步(GitHub Gist,多设备自动合并) ========== */
+const SYNC_KEY = 'healthplan.sync';
+var syncCfg = {token:'', gistId:'', auto:true, apiBase:'https://api.github.com', lastSync:0};
+try{ Object.assign(syncCfg, JSON.parse(localStorage.getItem(SYNC_KEY)||'{}')); }catch(e){}
+var snapSettings, snapBooks;
+snapSettings = JSON.stringify(db.settings||{});
+snapBooks = JSON.stringify(db.books||[]);
+
+function saveSyncCfg(){ try{ localStorage.setItem(SYNC_KEY, JSON.stringify(syncCfg)); }catch(e){} }
+function hhmm(ts){ const d=new Date(ts), p=n=>String(n).padStart(2,'0'); return p(d.getHours())+':'+p(d.getMinutes()); }
+function setBadge(cls, text){
+  const el = document.getElementById('syncBadge');
+  if(!el) return;
+  el.className = 'sync-badge '+cls;
+  el.textContent = text;
+  el.title = text + '(点击立即同步)';
+}
+
+function deepMerge(older, newer){
+  if(older===undefined || older===null) return newer;
+  if(newer===undefined || newer===null) return older;
+  if(typeof older!=='object' || typeof newer!=='object' || Array.isArray(older) || Array.isArray(newer)) return newer;
+  const out = {...older};
+  Object.keys(newer).forEach(k=>{ out[k] = deepMerge(older[k], newer[k]); });
+  return out;
+}
+
+/* 合并规则:记录按天、复盘按周、设置按字段——取两边都有的内容,时间新的优先 */
+function mergeDb(remote){
+  const L = db, R = remote || {};
+  let changed = false;
+  const out = {
+    settings: {...(L.settings||{})},
+    entries: {...(L.entries||{})},
+    reviews: {...(L.reviews||{})},
+    books: [...(L.books||[])],
+    _ts: {...(L._ts||{settings:0, books:0})}
+  };
+
+  Object.keys(R.entries||{}).forEach(k=>{
+    const r = R.entries[k], l = out.entries[k];
+    if(!l){ out.entries[k] = r; changed = true; return; }
+    if(JSON.stringify(l)===JSON.stringify(r)) return;
+    const newer = ((r.updated||0) > (l.updated||0)) ? r : l;
+    const older = (newer===r) ? l : r;
+    const m = deepMerge(older, newer);
+    m.updated = Math.max(l.updated||0, r.updated||0);
+    if(JSON.stringify(m)!==JSON.stringify(l)){ out.entries[k] = m; changed = true; }
+  });
+
+  Object.keys(R.reviews||{}).forEach(k=>{
+    const r = R.reviews[k], l = out.reviews[k];
+    if(!l || (r.saved||0) > (l.saved||0)){
+      if(JSON.stringify(l)!==JSON.stringify(r)){ out.reviews[k] = r; changed = true; }
+    }
+  });
+
+  const lts = out._ts.settings||0, rts = (R._ts && R._ts.settings)||0;
+  if(rts !== lts){
+    const rNewer = rts > lts;
+    const mergedS = deepMerge(rNewer ? (out.settings||{}) : (R.settings||{}), rNewer ? (R.settings||{}) : (out.settings||{}));
+    if(JSON.stringify(mergedS)!==JSON.stringify(out.settings)){ out.settings = mergedS; changed = true; }
+    out._ts.settings = Math.max(lts, rts);
+  }
+
+  const lb = out._ts.books||0, rb = (R._ts && R._ts.books)||0;
+  if(rb !== lb){
+    const newerB = rb > lb ? (R.books||[]) : out.books;
+    if(JSON.stringify(newerB)!==JSON.stringify(out.books)){ out.books = newerB; changed = true; }
+    out._ts.books = Math.max(lb, rb);
+  }
+  return {db: out, changed: changed};
+}
+
+async function gh(path, method, body){
+  const base = (syncCfg.apiBase||'https://api.github.com').replace(/\/+$/,'');
+  const res = await fetch(base+path, {
+    method: method,
+    headers: {
+      'Authorization': 'Bearer '+syncCfg.token,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if(!res.ok){
+    let msg = res.status+' '+res.statusText;
+    try{ const j = await res.json(); if(j.message) msg = res.status+': '+j.message; }catch(e){}
+    if(res.status===401) msg += '(令牌无效或已过期)';
+    if(res.status===404) msg += '(Gist 不存在或令牌无权限)';
+    const err = new Error(msg); err.status = res.status; throw err;
+  }
+  return res.json();
+}
+
+async function pullGist(){
+  const g = await gh('/gists/'+syncCfg.gistId, 'GET');
+  const f = g.files && g.files['health-plan.json'];
+  if(!f) throw new Error('Gist 里没有 health-plan.json');
+  let txt = f.content;
+  if(f.truncated && f.raw_url){
+    const r = await fetch(f.raw_url, {headers:{'Authorization':'Bearer '+syncCfg.token}});
+    txt = await r.text();
+  }
+  try{ return JSON.parse(txt); }catch(e){ throw new Error('云端数据解析失败'); }
+}
+
+function setSyncStatus(html){
+  const el = document.getElementById('syncStatus');
+  if(el) el.innerHTML = html;
+}
+function renderSyncStatus(){
+  if(!syncCfg.token || !syncCfg.gistId){
+    setSyncStatus('状态:<b>未配置</b> —— 按上面第 1–4 步设置一次,以后全自动。');
+    return;
+  }
+  setSyncStatus('状态:<b>已配置</b>' +
+    (syncCfg.lastSync ? ' · 上次同步 '+new Date(syncCfg.lastSync).toLocaleString('zh-CN') : ' · 尚未同步') +
+    ' · Gist <code>'+String(syncCfg.gistId).slice(0,10)+'…</code> · 自动同步:'+(syncCfg.auto?'开':'关'));
+}
+
+async function doSync(manual){
+  if(!syncCfg.token || !syncCfg.gistId){
+    if(manual) toast('先填写令牌并创建同步空间');
+    else setBadge('', '未配置同步');
+    return;
+  }
+  if(syncing) return;
+  if(!navigator.onLine){ setBadge('off','离线(数据已存本机)'); if(manual) toast('当前离线,数据已存在本机,联网后会自动同步'); return; }
+  syncing = true;
+  setBadge('busy','同步中…');
+  try{
+    const remote = await pullGist();
+    const m = mergeDb(remote);
+    if(m.changed){
+      db = m.db;
+      snapSettings = JSON.stringify(db.settings||{});
+      snapBooks = JSON.stringify(db.books||[]);
+      save();
+      renderAll();
+    }
+    await gh('/gists/'+syncCfg.gistId, 'PATCH', {files:{'health-plan.json':{content: JSON.stringify(db)}}});
+    syncCfg.lastSync = Date.now();
+    saveSyncCfg();
+    setBadge('ok','已同步 '+hhmm(syncCfg.lastSync));
+    renderSyncStatus();
+    if(manual) toast('同步完成');
+  }catch(err){
+    const off = !navigator.onLine;
+    setBadge(off?'off':'err', off?'离线(数据在本机)':'同步失败');
+    setSyncStatus('同步出错:<span style="color:#dc2626">'+err.message+'</span>' +
+      (syncCfg.lastSync? ' · 上次成功:'+new Date(syncCfg.lastSync).toLocaleString('zh-CN'):''));
+    if(manual) toast('同步失败:'+err.message);
+  }finally{
+    syncing = false;
+  }
+}
+
+function scheduleSync(delay){
+  if(!syncCfg.auto || !syncCfg.token || !syncCfg.gistId) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(runAuto, delay||2500);
+}
+async function runAuto(){
+  if(!syncCfg.auto || !syncCfg.token || !syncCfg.gistId) return;
+  if(syncing){ syncTimer = setTimeout(runAuto, 3000); return; }
+  if(!navigator.onLine){ setBadge('off','离线(数据在本机)'); return; }
+  await doSync(false);
+}
+
+/* UI 绑定 */
+function readSyncInputs(){
+  const t = document.getElementById('sync_token');
+  const g = document.getElementById('sync_gist');
+  const a = document.getElementById('sync_api');
+  if(t) syncCfg.token = t.value.trim();
+  if(g) syncCfg.gistId = g.value.trim();
+  if(a) syncCfg.apiBase = (a.value.trim()||'https://api.github.com').replace(/\/+$/,'');
+  const auto = document.getElementById('syncAuto');
+  if(auto) syncCfg.auto = auto.checked;
+  saveSyncCfg();
+}
+
+function initSyncUI(){
+  document.getElementById('sync_token').value = syncCfg.token||'';
+  document.getElementById('sync_gist').value = syncCfg.gistId||'';
+  document.getElementById('sync_api').value = syncCfg.apiBase||'https://api.github.com';
+  document.getElementById('syncAuto').checked = !!syncCfg.auto;
+  renderSyncStatus();
+  if(syncCfg.token && syncCfg.gistId) setBadge('', '待同步');
+  else setBadge('', '未配置同步');
+}
+
+document.getElementById('syncCreate').onclick = async ()=>{
+  readSyncInputs();
+  const token = syncCfg.token;
+  if(!token){ toast('先粘贴 GitHub 访问令牌'); return; }
+  const msg = syncCfg.gistId
+    ? '本设备已经配置过同步空间。\n重新创建会生成一个全新的私密 Gist,其他设备都得改用新 ID。\n\n确定重新创建吗?'
+    : '将在你的 GitHub 账号下创建一个【私密 Gist】来存放健康数据(只有你和你的令牌能读)。\n\n确定继续?';
+  if(!confirm(msg)) return;
+  syncCfg.token = token;
+  saveSyncCfg();
+  setBadge('busy','创建中…');
+  try{
+    const g = await gh('/gists','POST',{
+      description:'健康计划 · 减脂睡眠阅读数据(自动同步)',
+      public:false,
+      files:{'health-plan.json':{content: JSON.stringify(db)}}
+    });
+    syncCfg.gistId = g.id;
+    syncCfg.lastSync = Date.now();
+    saveSyncCfg();
+    document.getElementById('sync_gist').value = g.id;
+    snapSettings = JSON.stringify(db.settings||{});
+    snapBooks = JSON.stringify(db.books||[]);
+    setBadge('ok','已同步 '+hhmm(syncCfg.lastSync));
+    renderSyncStatus();
+    toast('同步空间已创建!把令牌和 Gist ID 也填到手机上');
+  }catch(err){
+    setBadge('err','创建失败');
+    setSyncStatus('创建失败:<span style="color:#dc2626">'+err.message+'</span>');
+    toast('创建失败:'+err.message);
+  }
+};
+
+document.getElementById('syncNow').onclick = ()=>{ readSyncInputs(); renderSyncStatus(); doSync(true); };
+document.getElementById('syncSave').onclick = ()=>{
+  readSyncInputs();
+  renderSyncStatus();
+  toast('同步设置已保存');
+  if(syncCfg.token && syncCfg.gistId) doSync(false);
+};
+document.getElementById('syncAuto').addEventListener('change', ()=>{
+  syncCfg.auto = document.getElementById('syncAuto').checked;
+  saveSyncCfg(); renderSyncStatus();
+});
+document.getElementById('syncBadge').addEventListener('click', ()=>doSync(true));
+
+/* 同步触发:页面打开 / 回到前台 / 联网 / 每分钟 */
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') runAuto(); });
+window.addEventListener('online', ()=>{ setBadge('busy','联网中…'); runAuto(); });
+window.addEventListener('offline', ()=>setBadge('off','离线(数据在本机)'));
+setInterval(()=>{ if(syncCfg.auto && document.visibilityState==='visible') runAuto(); }, 60000);
+
+/* PWA:注册 Service Worker + 安装到桌面 */
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+var deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstall = e;
+  const box = document.getElementById('installBox');
+  if(box) box.style.display = 'block';
+});
+document.getElementById('installBtn').onclick = async ()=>{
+  if(!deferredInstall){ toast('用 Chrome 菜单 →"添加到主屏幕"即可'); return; }
+  deferredInstall.prompt();
+  const choice = await deferredInstall.userChoice;
+  if(choice.outcome==='accepted') toast('已安装到桌面');
+  deferredInstall = null;
+  document.getElementById('installBox').style.display = 'none';
+};
+
+syncReady = true;
+
+/* ========== 启动 ========== */
+function renderAll(){ refreshToday(); renderGrowth(); renderData(); renderReview(); renderSettings(); renderSyncStatus(); }
+initSyncUI();
+renderAll();
+runAuto();   // 打开页面时自动拉取一次
+</script>
+</body>
+</html>
