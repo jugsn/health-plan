@@ -58,8 +58,15 @@
   }
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
   /* 体重输入 + 单位切换(kg / 斤) */
-  .w-input{display:flex; gap:6px}
-  .w-input input{flex:1; min-width:0}
+  /* 输入行:输入框 + 右侧附属控件(单位切换 / 快捷按钮) */
+  .input-row{display:flex; gap:6px}
+  .input-row input{flex:1; min-width:0}
+  .inline-btn{
+    flex:none; padding:0 12px; font:inherit; font-size:13px; font-weight:600;
+    background:#fff; color:var(--accent); border:1px solid var(--line);
+    border-radius:9px; cursor:pointer; white-space:nowrap;
+  }
+  .inline-btn:hover{background:var(--accent-soft); border-color:var(--accent)}
   .unit-toggle{
     display:flex; flex:none; gap:1px; overflow:hidden;
     border:1px solid var(--line); border-radius:9px; background:var(--line);
@@ -240,7 +247,7 @@
       <div class="row">
         <div class="field" style="flex:1.35">
           <label>晨起体重</label>
-          <div class="w-input">
+          <div class="input-row">
             <input type="number" id="f_weight" step="0.1" placeholder="如 92.4">
             <div class="unit-toggle" id="wUnit" title="按电子秤显示的单位录入">
               <button type="button" data-u="kg">kg</button>
@@ -262,11 +269,17 @@
       <div class="row">
         <div class="field">
           <label>上床时间</label>
-          <input type="time" id="f_sleepStart">
+          <div class="input-row">
+            <input type="time" id="f_sleepStart">
+            <button type="button" class="inline-btn now-btn" data-for="f_sleepStart" title="填入当前时间">现在</button>
+          </div>
         </div>
         <div class="field">
           <label>起床时间</label>
-          <input type="time" id="f_sleepEnd">
+          <div class="input-row">
+            <input type="time" id="f_sleepEnd">
+            <button type="button" class="inline-btn now-btn" data-for="f_sleepEnd" title="填入当前时间">现在</button>
+          </div>
         </div>
         <div class="field">
           <label>睡眠时长</label>
@@ -672,7 +685,7 @@
       </div>
       <div class="field">
         <label>目标体重</label>
-        <div class="w-input">
+        <div class="input-row">
           <input type="number" id="s_goal" step="0.5" placeholder="如 75">
           <div class="unit-toggle" id="sUnit">
             <button type="button" data-u="kg">kg</button>
@@ -704,6 +717,22 @@
         <button class="btn ghost" id="importBtn">导入备份</button>
         <input type="file" id="importFile" accept="application/json" style="display:none">
       </div>
+
+      <hr style="border:0; border-top:1px solid var(--line); margin:18px 0">
+      <h3 style="margin-top:0">从小米运动健康导入睡眠</h3>
+      <p class="muted" style="margin-bottom:8px">
+        导出路径:小米账号 → <b>隐私 → 管理您的数据 → 小米运动健康 → 下载</b>,
+        收到邮件后解压,选里面的 <code>*aggregated_fitness_data.csv</code>(或 <code>*fitness_data.csv</code>)。
+      </p>
+      <p class="muted" style="margin-bottom:10px">
+        · 一次睡眠记在<b>起床那天</b>:上床 23:12 → 起床 07:05,记到 07:05 那天<br>
+        · <b>与已有数据冲突时以小米为准</b>,直接覆盖上床/起床时间(体重、步数等其它字段不动)
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn ghost" id="miImportBtn">选择 CSV 文件</button>
+        <input type="file" id="miImportFile" accept=".csv,text/csv,text/plain" style="display:none">
+      </div>
+      <div id="miImportLog" class="muted" style="margin-top:10px; white-space:pre-wrap; font-size:12px; line-height:1.7"></div>
       <hr style="border:0; border-top:1px solid var(--line); margin:18px 0">
       <button class="btn danger sm" id="clearBtn">清空全部数据</button>
       <div class="hint" style="margin-top:14px">
@@ -997,6 +1026,18 @@ function updateSleepDur(){
   document.getElementById('f_sleepDur').value = h==null ? '' : (Math.floor(h)+' 小时 '+Math.round((h%1)*60)+' 分');
 }
 ['f_sleepStart','f_sleepEnd'].forEach(id=>document.getElementById(id).addEventListener('input', updateSleepDur));
+
+/* 「现在」按钮:一键填入当前时间,免得每天手动敲 */
+document.querySelectorAll('.now-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const inp = document.getElementById(btn.dataset.for);
+    if(!inp) return;
+    const d = new Date(), p = n => String(n).padStart(2,'0');
+    inp.value = p(d.getHours()) + ':' + p(d.getMinutes());
+    inp.dispatchEvent(new Event('input',  {bubbles:true}));   // 更新睡眠时长
+    inp.dispatchEvent(new Event('change', {bubbles:true}));   // 触发失焦自动保存
+  });
+});
 
 /* 移动端自动保存:失焦即存,不用找保存按钮 */
 document.querySelectorAll('#tab-today input, #tab-today select, #tab-today textarea').forEach(el=>{
@@ -1386,6 +1427,197 @@ document.getElementById('clearBtn').onclick = ()=>{
     db = defaultData(); save(); curDate=todayStr(); curWeek=mondayOf(todayStr()); renderAll(); toast('已清空');
   }
 };
+
+/* ========== 小米运动健康 CSV 导入 ==========
+   小米导出的 CSV 列名、时间格式、编码都随版本变,所以这里全部做成自适应:
+   自动识别编码(UTF-8/GBK) → 找表头 → 认出「指标列 / 上床列 / 起床列 / 值列」
+   → 只挑睡眠行 → 从 JSON 里挖 bedtime / wake_up_time。
+   时间戳兼容秒、毫秒和 "2026-11-08 23:12:00" 这类字符串。 */
+
+function decodeCSV(buf){
+  const tryDec = (enc, fatal)=>{ try{ return new TextDecoder(enc, {fatal}).decode(buf); }catch(e){ return null; } };
+  return tryDec('utf-8', true) || tryDec('gbk') || new TextDecoder('utf-8').decode(buf);
+}
+
+function parseCSV(text){
+  const rows = []; let row = [], field = '', inQ = false;
+  for(let i=0; i<text.length; i++){
+    const c = text[i];
+    if(inQ){
+      if(c === '"'){ if(text[i+1] === '"'){ field += '"'; i++; } else inQ = false; }
+      else field += c;
+    }else{
+      if(c === '"') inQ = true;
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); field = ''; rows.push(row); row = []; }
+      else if(c !== '\r') field += c;
+    }
+  }
+  if(field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+function findHeader(rows){
+  const KEY_RE  = /^(key|metric|type|name|data_?type|指标|类型|数据类型)$/i;
+  const TIME_RE = /^(time|date|timestamp|datetime|时间|日期|时间戳)$/i;
+  const VAL_RE  = /^(value|val|data|summary|content|值|内容|数据)$/i;
+  // 不做全匹配:列名可能带后缀(bedtime_ms、wake_up_time_ms、sleep_start_ts)
+  const BT_RE   = /(bed_?time|fall_?asleep|sleep_?start|上床|入睡)/i;
+  const WK_RE   = /(wake_?up|get_?up|sleep_?end|起床)/i;
+  for(let i=0; i<Math.min(rows.length, 20); i++){
+    const norm = (rows[i]||[]).map(c=>String(c||'').trim());
+    const key = norm.findIndex(c=>KEY_RE.test(c));
+    const val = norm.findIndex(c=>VAL_RE.test(c));
+    const bt  = norm.findIndex(c=>BT_RE.test(c));
+    const wk  = norm.findIndex(c=>WK_RE.test(c));
+    const tm  = norm.findIndex((c, idx)=> idx!==key && idx!==val && TIME_RE.test(c));
+    if((key>=0 && val>=0) || (bt>=0 && wk>=0)) return {row:i, key, val, time:tm, start:bt, end:wk};
+  }
+  return null;
+}
+
+/* 把各种写法的时间变成 Date(本地时区) */
+function toDate(v){
+  if(v == null || v === '') return null;
+  if(typeof v === 'number' && isFinite(v)){
+    const ms = v > 1e11 ? v : v*1000;          // 13 位是毫秒,10 位是秒
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const s = String(v).trim();
+  if(!s) return null;
+  if(/^\d{10,14}$/.test(s)) return toDate(Number(s));
+  const d = new Date(s.replace(/\//g, '-').replace(' ', 'T'));   // 无时区的按本地时间解析
+  return isNaN(d.getTime()) ? null : d;
+}
+
+const dayKey = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+/* hhmm() 已在下面定义(接受时间戳),new Date(dateObj) 也能直接吃 Date,此处不再重复声明 */
+
+/* 从睡眠 JSON 里挖出上床 / 起床时间。
+   lenient=false 时只认明确的 bedtime / wake_up_time 字段,
+   避免在没有指标列的文件里把运动记录的 start_time 当成睡眠。 */
+function digSleep(o, depth, lenient){
+  if(!o || typeof o !== 'object' || depth > 3) return null;
+  const pick = names => { for(const n of names) if(o[n] != null && o[n] !== '') return o[n]; return null; };
+
+  let bt = pick(['bedtime','bed_time','fall_asleep_time','fallAsleepTime','sleep_start','sleepStart']);
+  let wk = pick(['wake_up_time','wakeUpTime','wake_time','get_up_time','getUpTime','sleep_end','sleepEnd']);
+  if(bt != null && wk != null) return {ss: toDate(bt), se: toDate(wk)};
+
+  if(lenient){
+    const a = pick(['start_time','startTime','start']), b = pick(['end_time','endTime','end']);
+    if(a != null && b != null) return {ss: toDate(a), se: toDate(b)};
+  }
+
+  // 分段明细:取最早开始、最晚结束
+  const items = o.items || o.sleep_items || o.stages;
+  if(Array.isArray(items) && items.length){
+    let lo = null, hi = null;
+    items.forEach(it=>{
+      const s = toDate(it && (it.start_time ?? it.startTime)), e = toDate(it && (it.end_time ?? it.endTime));
+      if(s && (!lo || s < lo)) lo = s;
+      if(e && (!hi || e > hi)) hi = e;
+    });
+    if(lo && hi) return {ss: lo, se: hi};
+  }
+
+  for(const k of ['segment_details','segments','sleeps','sleep_list','details','list','data']){
+    const v = o[k];
+    if(Array.isArray(v)){ for(const it of v){ const r = digSleep(it, depth+1, lenient); if(r && r.ss && r.se) return r; } }
+    else if(v && typeof v === 'object'){ const r = digSleep(v, depth+1, lenient); if(r && r.ss && r.se) return r; }
+  }
+  return null;
+}
+
+function importMiSleep(buf){
+  const text = decodeCSV(buf).replace(/^\uFEFF/, '');
+  const rows = parseCSV(text);
+  if(rows.length < 2) throw new Error('没读到有效数据行(确认选的是 .csv)');
+
+  const hdr = findHeader(rows);
+  const keyCol = hdr ? hdr.key : -1;
+  const startCol = hdr ? hdr.start : -1;
+  const endCol = hdr ? hdr.end : -1;
+
+  const found = Object.create(null);
+  let scanned = 0, parsed = 0, bad = 0;
+
+  for(let i = hdr ? hdr.row + 1 : 0; i < rows.length; i++){
+    const row = rows[i];
+    if(!row || !row.length) continue;
+    if(keyCol >= 0){
+      const k = String(row[keyCol] || '').toLowerCase();
+      if(k && !/sleep|睡/.test(k)) continue;
+    }
+    scanned++;
+
+    let ss = null, se = null;
+    if(startCol >= 0 && endCol >= 0){                 // (a) 有明确的上床 / 起床列
+      const a = toDate(row[startCol]), b = toDate(row[endCol]);
+      if(a && b){ ss = a; se = b; }
+    }
+    if(!ss){                                          // (b) 某个单元格是 JSON
+      for(const cell of row){
+        const c = String(cell == null ? '' : cell).trim();
+        if(c.length < 2 || c[0] !== '{') continue;
+        let o; try{ o = JSON.parse(c); }catch(e){ continue; }
+        const hit = digSleep(o, 0, keyCol >= 0);
+        if(hit && hit.ss && hit.se){ ss = hit.ss; se = hit.se; break; }
+      }
+    }
+    if(!ss || !se){ bad++; continue; }
+
+    const dur = (se - ss) / 3600000;
+    if(dur <= 0 || dur > 16){ bad++; continue; }     // 与 sleepHours 的 16 小时上限一致
+    parsed++;
+    found[dayKey(se)] = {ss: hhmm(ss), se: hhmm(se)}; // 记在起床那天
+  }
+
+  if(!parsed) throw new Error('找到 ' + scanned + ' 行候选,但没有一行能解析出「上床 + 起床」时间');
+
+  /* 以小米为准:睡眠时间直接覆盖,其它字段不动 */
+  let added = 0, replaced = 0, same = 0;
+  Object.keys(found).sort().forEach(k=>{
+    const v = found[k];
+    const e = db.entries[k] || (db.entries[k] = {});
+    const empty = e.sleepStart == null && e.sleepEnd == null;
+    if(empty) added++;
+    else if(e.sleepStart !== v.ss || e.sleepEnd !== v.se) replaced++;
+    else same++;
+    e.sleepStart = v.ss;
+    e.sleepEnd   = v.se;
+    e.updated = Date.now();
+  });
+
+  return {
+    days: Object.keys(found).length, added, replaced, same, scanned, bad,
+    log: '扫描 ' + scanned + ' 行 → 解析出 ' + Object.keys(found).length + ' 天睡眠\n'
+       + '新增 ' + added + ' 天 · 覆盖 ' + replaced + ' 天(以小米为准) · 与已有相同 ' + same + ' 天\n'
+       + '跳过 ' + bad + ' 行(非睡眠记录或无法解析)'
+  };
+}
+
+document.getElementById('miImportBtn').onclick = ()=>document.getElementById('miImportFile').click();
+document.getElementById('miImportFile').addEventListener('change', ev=>{
+  const f = ev.target.files[0]; if(!f) return;
+  const logEl = document.getElementById('miImportLog');
+  const log = m => { logEl.textContent = m; };
+  log('读取 ' + f.name + ' …');
+  const r = new FileReader();
+  r.onerror = ()=> log('读取文件失败');
+  r.onload = ()=>{
+    try{
+      const res = importMiSleep(r.result);
+      log(res.log);
+      if(res.days > 0){ save(); renderAll(); toast('已导入 ' + res.days + ' 天睡眠'); }
+    }catch(e){
+      log('导入失败:' + (e && e.message ? e.message : e));
+    }
+    ev.target.value = '';      // 清掉,方便重复选同一个文件重试
+  };
+  r.readAsArrayBuffer(f);
+});
 
 /* ========== 成长页 ========== */
 const LADDER = [
