@@ -57,6 +57,19 @@
     border-radius:9px; padding:8px 10px; width:100%;
   }
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
+  /* 体重输入 + 单位切换(kg / 斤) */
+  .w-input{display:flex; gap:6px}
+  .w-input input{flex:1; min-width:0}
+  .unit-toggle{
+    display:flex; flex:none; gap:1px; overflow:hidden;
+    border:1px solid var(--line); border-radius:9px; background:var(--line);
+  }
+  .unit-toggle button{
+    border:0; background:#fff; color:var(--muted); font:inherit; font-size:13px;
+    padding:0 11px; cursor:pointer; white-space:nowrap;
+  }
+  .unit-toggle button.on{background:var(--accent); color:#fff; font-weight:700}
+  .w-hint{font-size:12px; color:var(--muted); min-height:15px; line-height:15px}
   .row{display:flex; gap:12px; flex-wrap:wrap}
   .row .field{flex:1; min-width:130px}
   .btn{
@@ -225,9 +238,16 @@
       </div>
 
       <div class="row">
-        <div class="field">
-          <label>晨起体重(kg)</label>
-          <input type="number" id="f_weight" step="0.1" placeholder="如 92.4">
+        <div class="field" style="flex:1.35">
+          <label>晨起体重</label>
+          <div class="w-input">
+            <input type="number" id="f_weight" step="0.1" placeholder="如 92.4">
+            <div class="unit-toggle" id="wUnit" title="按电子秤显示的单位录入">
+              <button type="button" data-u="kg">kg</button>
+              <button type="button" data-u="jin">斤</button>
+            </div>
+          </div>
+          <div class="w-hint" id="wHint"></div>
         </div>
         <div class="field">
           <label>今日步数</label>
@@ -651,8 +671,15 @@
         <input type="date" id="s_start">
       </div>
       <div class="field">
-        <label>目标体重(kg)</label>
-        <input type="number" id="s_goal" step="0.5" placeholder="如 75">
+        <label>目标体重</label>
+        <div class="w-input">
+          <input type="number" id="s_goal" step="0.5" placeholder="如 75">
+          <div class="unit-toggle" id="sUnit">
+            <button type="button" data-u="kg">kg</button>
+            <button type="button" data-u="jin">斤</button>
+          </div>
+        </div>
+        <div class="w-hint" id="goalHint"></div>
       </div>
       <div class="field">
         <label>固定起床时间</label>
@@ -724,7 +751,8 @@ const defaultData = () => ({
     bedTarget: '23:30',
     trainingDays: [1,3,6],
     readGoal: 20,
-    ladderLevel: 1
+    ladderLevel: 1,
+    weightUnit: 'kg'
   },
   entries:{},
   reviews:{},
@@ -739,6 +767,58 @@ if(!db.books) db.books = [];
 if(!db.settings.readGoal) db.settings.readGoal = 20;
 if(!db.settings.ladderLevel) db.settings.ladderLevel = 1;
 if(!Array.isArray(db.settings.trainingDays) || !db.settings.trainingDays.length) db.settings.trainingDays = [1,3,6];
+if(db.settings.weightUnit!=='kg' && db.settings.weightUnit!=='jin') db.settings.weightUnit = 'kg';
+
+/* ========== 体重单位 ==========
+   底层永远存 kg(图表 / 目标 / 跨设备合并都不用动),
+   只在录入和回显时按当前单位换算:1 斤 = 0.5 kg。 */
+const isJin = ()=> db.settings.weightUnit === 'jin';
+const kgToDisp = kg => isJin() ? Math.round(kg*2*10)/10 : kg;   // kg -> 界面显示
+const dispToKg = v  => isJin() ? Math.round(v/2*1000)/1000 : v; // 界面输入 -> kg
+const JIN_MIN = 60, JIN_MAX = 500;  // 斤模式下的合法输入范围(= 30–250 kg)
+
+function renderUnitToggles(){
+  const u = isJin() ? 'jin' : 'kg';
+  document.querySelectorAll('.unit-toggle button').forEach(b=>b.classList.toggle('on', b.dataset.u===u));
+}
+function updateWeightHint(){
+  const el = document.getElementById('wHint'); if(!el) return;
+  const w = num(document.getElementById('f_weight').value);
+  el.textContent = w===null ? '' : (isJin() ? '≈ '+(w/2).toFixed(1)+' kg' : '≈ '+(w*2).toFixed(1)+' 斤');
+}
+function updateGoalHint(){
+  const el = document.getElementById('goalHint'); if(!el) return;
+  const g = num(document.getElementById('s_goal').value);
+  el.textContent = g===null ? '' : (isJin() ? '≈ '+(g/2).toFixed(1)+' kg' : '≈ '+(g*2).toFixed(1)+' 斤');
+}
+/* 切单位:先按旧单位把框里的数字折成 kg,再统一切到新单位显示,数字不会被误读 */
+function switchUnit(next){
+  if((isJin()?'jin':'kg') === next) return;
+  const oldIsJin = isJin();
+  const pending = [['f_weight', updateWeightHint], ['s_goal', updateGoalHint]].map(([id, hint])=>{
+    const inp = document.getElementById(id);
+    const v = inp ? num(inp.value) : null;
+    return {inp, hint, kg: v===null ? null : (oldIsJin ? Math.round(v/2*1000)/1000 : v)};
+  });
+  db.settings.weightUnit = next;
+  pending.forEach(p=>{
+    if(!p.inp || p.kg===null) return;
+    p.inp.value = kgToDisp(p.kg);
+    p.hint();
+  });
+  save(); renderUnitToggles();
+}
+document.getElementById('wUnit').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  switchUnit(b.dataset.u); saveEntry(true);
+});
+document.getElementById('sUnit').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  switchUnit(b.dataset.u);
+});
+/* 输入时实时显示换算结果(不用等失焦) */
+document.getElementById('f_weight').addEventListener('input', updateWeightHint);
+document.getElementById('s_goal').addEventListener('input', updateGoalHint);
 
 /* 同步相关状态(提前声明,避免 TDZ) */
 var syncReady = false, syncing = false, syncTimer = null;
@@ -895,7 +975,8 @@ document.getElementById('habitList').addEventListener('change', e=>{
 function fillForm(){
   const e = db.entries[curDate] || {};
   document.getElementById('curDateLabel').textContent = fmtDate(curDate) + (curDate===todayStr()?' · 今天':'');
-  document.getElementById('f_weight').value = e.weight ?? '';
+  document.getElementById('f_weight').value = e.weight==null ? '' : kgToDisp(e.weight);
+  updateWeightHint();
   document.getElementById('f_steps').value = e.steps ?? '';
   document.getElementById('f_hunger').value = e.hunger ?? '';
   document.getElementById('f_sleepStart').value = e.sleepStart ?? '';
@@ -926,8 +1007,12 @@ document.querySelectorAll('#tab-today input, #tab-today select, #tab-today texta
 document.getElementById('saveEntry').addEventListener('click', ()=>saveEntry(false));
 function saveEntry(silent){
   const e = db.entries[curDate] || (db.entries[curDate]={});
-  const w = num(document.getElementById('f_weight').value);
-  if(w !== null){ if(w<30||w>250){ toast('体重数值看起来不对,请检查'); return; } e.weight = w; }
+  const wRaw = num(document.getElementById('f_weight').value);
+  if(wRaw !== null){
+    const w = dispToKg(wRaw);
+    if(w<30||w>250){ toast('体重数值看起来不对(应为 '+(isJin()? JIN_MIN+'–'+JIN_MAX+' 斤':'30–250 kg')+')'); return; }
+    e.weight = w;
+  }
   else delete e.weight;
   const st = num(document.getElementById('f_steps').value);  if(st!==null) e.steps = st; else delete e.steps;
   const hg = num(document.getElementById('f_hunger').value); if(hg!==null) e.hunger = hg; else delete e.hunger;
@@ -1251,7 +1336,8 @@ const DAY_CN = ['日','一','二','三','四','五','六'];
 function renderSettings(){
   const s = db.settings;
   document.getElementById('s_start').value = s.startDate;
-  document.getElementById('s_goal').value = s.goalWeight||'';
+  document.getElementById('s_goal').value = s.goalWeight==null||s.goalWeight==='' ? '' : kgToDisp(parseFloat(s.goalWeight));
+  updateGoalHint(); renderUnitToggles();
   document.getElementById('s_wake').value = s.wakeTarget||'07:00';
   document.getElementById('s_bed').value = s.bedTarget||'23:30';
   document.getElementById('s_trainDays').innerHTML = [1,2,3,4,5,6,0].map(d=>
@@ -1268,7 +1354,8 @@ document.getElementById('s_trainDays').addEventListener('click', e=>{
 });
 document.getElementById('saveSettings').onclick = ()=>{
   db.settings.startDate = document.getElementById('s_start').value || todayStr();
-  db.settings.goalWeight = document.getElementById('s_goal').value;
+  const gv = num(document.getElementById('s_goal').value);
+  db.settings.goalWeight = gv===null ? '' : String(dispToKg(gv));
   db.settings.wakeTarget = document.getElementById('s_wake').value || '07:00';
   db.settings.bedTarget  = document.getElementById('s_bed').value || '23:30';
   save(); renderAll(); toast('设置已保存');
