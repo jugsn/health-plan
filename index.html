@@ -725,9 +725,9 @@
         收到邮件后解压,选里面的 <code>*aggregated_fitness_data.csv</code>(或 <code>*fitness_data.csv</code>,大文件也行)。
       </p>
       <p class="muted" style="margin-bottom:10px">
-        · 睡眠:一次记在<b>起床那天</b>;与已有数据冲突时<b>以小米为准</b>,覆盖上床/起床<br>
-        · 步数:只补<b>没有记录的天</b>,本机已填的步数不动(导出当天可能只有半天数据)<br>
-        · 体重:手环/体脂秤实测值,<b>以小米为准</b>(恒按 kg 存储,显示随「斤/kg」切换)
+        · 只做<b>补漏</b>:导入只填本机<b>没记录</b>的天数,你手动填过的(体重/睡眠/步数)一律不动<br>
+        · 睡眠一次记在<b>起床那天</b>;上床/起床仍可用输入框旁的「现在」一键填<br>
+        · 体重录入不变:点 <b>kg/斤</b> 切换后照秤上数字填,图表始终按 kg 计算
       </p>
       <div style="display:flex; gap:10px; flex-wrap:wrap">
         <button class="btn ghost" id="miImportBtn">选择 CSV 文件(睡眠+步数+体重)</button>
@@ -1657,18 +1657,16 @@ function importMiSleep(buf){
     throw new Error('在 ' + scanned + ' 行里既没找到睡眠,也没找到步数/体重');
   }
 
-  /* 睡眠:以小米为准,直接覆盖上床/起床,其它字段不动 */
-  let added = 0, replaced = 0, same = 0;
+  /* 睡眠:只补漏——本机这天没记上床/起床才填,已记录的一律不动 */
+  let added = 0, skipped = 0;
   Object.keys(found).sort().forEach(k=>{
     const v = found[k];
     const e = db.entries[k] || (db.entries[k] = {});
-    const empty = e.sleepStart == null && e.sleepEnd == null;
-    if(empty) added++;
-    else if(e.sleepStart !== v.ss || e.sleepEnd !== v.se) replaced++;
-    else same++;
+    if(e.sleepStart != null || e.sleepEnd != null){ skipped++; return; }
     e.sleepStart = v.ss;
     e.sleepEnd   = v.se;
     e.updated = Date.now();
+    added++;
   });
 
   /* 步数:只补空,不覆盖本机已记录的(导出如果是当天生成的,当天步数只有半天) */
@@ -1682,26 +1680,25 @@ function importMiSleep(buf){
     else stepsHad++;
   });
 
-  /* 体重:以小米为准(手环/体脂秤实测,同一天以最近一次为准) */
-  let wNew = 0, wReplaced = 0, wSame = 0;
+  /* 体重:只补漏——本机这天没称才填,已记录的一律不动(录入仍走 kg/斤 切换) */
+  let wNew = 0, wHad = 0;
   Object.keys(weigh).forEach(k=>{
     const v = weigh[k].w;
     const e = db.entries[k] || (db.entries[k] = {});
     if(e.weight == null || e.weight === ''){ e.weight = v; e.updated = Date.now(); wNew++; }
-    else if(Math.abs(Number(e.weight) - v) >= 0.005){ e.weight = v; e.updated = Date.now(); wReplaced++; }
-    else wSame++;
+    else wHad++;
   });
 
   const sleepDays = Object.keys(found).length;
   return {
-    days: sleepDays, added, replaced, same, scanned, bad,
+    days: sleepDays, added, skipped, scanned, bad,
     stepsDays: Object.keys(stepDays).length, stepsNew, stepsHad,
-    weightDays: Object.keys(weigh).length, wNew, wReplaced, wSame,
-    touched: sleepDays + stepsNew + wNew + wReplaced,
+    weightDays: Object.keys(weigh).length, wNew, wHad,
+    touched: added + stepsNew + wNew,
     log: '扫描 ' + scanned + ' 行(睡眠/步数/体重)\n'
-       + (sleepDays ? '睡眠 ' + sleepDays + ' 天:新增 ' + added + ' · 覆盖 ' + replaced + ' · 相同 ' + same + '(以小米为准);跳过 ' + bad + ' 行\n' : '')
+       + (sleepDays ? '睡眠 ' + sleepDays + ' 天:补上 ' + added + ' 天 · 本机已有不动 ' + skipped + ' 天;跳过 ' + bad + ' 行\n' : '')
        + (Object.keys(stepDays).length ? '步数 ' + Object.keys(stepDays).length + ' 天:补上 ' + stepsNew + ' 天 · 本机已有不动 ' + stepsHad + ' 天\n' : '')
-       + (Object.keys(weigh).length ? '体重 ' + Object.keys(weigh).length + ' 天:新增 ' + wNew + ' · 覆盖 ' + wReplaced + ' · 相同 ' + wSame + '(以小米为准)' : '')
+       + (Object.keys(weigh).length ? '体重 ' + Object.keys(weigh).length + ' 天:补上 ' + wNew + ' 天 · 本机已有不动 ' + wHad + ' 天' : '')
   };
 }
 
@@ -1717,7 +1714,7 @@ document.getElementById('miImportFile').addEventListener('change', ev=>{
     try{
       const res = importMiSleep(r.result);
       log(res.log);
-      if(res.touched > 0){ save(); renderAll(); toast('已导入 ' + res.touched + ' 天数据(睡眠/步数/体重)'); }
+      if(res.touched > 0){ save(); renderAll(); toast('已补录 ' + res.touched + ' 天遗漏数据(睡眠/步数/体重)'); }
     }catch(e){
       log('导入失败:' + (e && e.message ? e.message : e));
     }
