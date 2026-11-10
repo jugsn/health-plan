@@ -285,6 +285,9 @@
           <label>睡眠时长</label>
           <input type="text" id="f_sleepDur" readonly placeholder="自动计算" style="background:#fbfcfd">
         </div>
+        <div class="muted" style="flex-basis:100%; font-size:12px; line-height:1.6; margin-top:-4px">
+          一段睡眠记在<b>起床那天</b>。两种填法都行:① 晚上睡前点「上床·现在」,第二天<b>早上在当天的卡上</b>点「起床·现在」,自动拼成一次;② 早上一次填完:上床填昨晚几点(如 23:30)+ 起床点「现在」。跨零点时长自动算
+        </div>
       </div>
 
       <div class="row">
@@ -737,7 +740,7 @@
       <hr style="border:0; border-top:1px solid var(--line); margin:18px 0">
       <button class="btn danger sm" id="clearBtn">清空全部数据</button>
       <div class="hint" style="margin-top:14px">
-        <b>使用建议:</b>每天早上排便后称重 → 打开"今日"填 5 个格子 → 勾习惯清单 → 保存。晚上睡前只填上床时间。周日打开"周复盘"写三句话。
+        <b>使用建议:</b>每天早上排便后称重 → 打开"今日"填 5 个格子 → 勾习惯清单 → 保存。晚上睡前点「上床·现在」,第二天早上点「起床·现在」,睡眠自动拼好并记在起床那天。周日打开"周复盘"写三句话。
       </div>
     </div>
   </div>
@@ -920,6 +923,20 @@ function sleepHours(e){
   const h = mins/60;
   return (h > 16) ? null : h;   // 异常值不计入
 }
+/* 这条记录里有没有"真实数据"(用于判断挪走上床后,昨天的空壳要不要删) */
+function hasRealData(e){
+  if(!e) return false;
+  if(e.weight != null || e.steps != null || e.hunger != null) return true;
+  if(e.sleepStart || e.sleepEnd) return true;
+  if(e.protein != null && e.protein !== '') return true;
+  if(e.train != null && e.train !== '') return true;
+  if(e.free === 'yes') return true;
+  if(e.notes) return true;
+  if(e.readMin != null || e.readPages != null) return true;
+  if(e.assertDone != null && e.assertDone !== '') return true;
+  if(e.habits && Object.keys(e.habits).some(k=>e.habits[k])) return true;
+  return false;
+}
 function weekDates(mondayKey){
   const out=[]; for(let i=0;i<7;i++) out.push(addDays(mondayKey,i)); return out;
 }
@@ -1060,6 +1077,16 @@ function saveEntry(silent){
   const hg = num(document.getElementById('f_hunger').value); if(hg!==null) e.hunger = hg; else delete e.hunger;
   e.sleepStart = document.getElementById('f_sleepStart').value || '';
   e.sleepEnd   = document.getElementById('f_sleepEnd').value || '';
+  /* 自动拼接:昨晚在昨天的卡上只填了上床,今早在今天的卡填起床 →
+     把上床挪到今天,拼成完整一次(睡眠记在起床那天,和图表/导入一致) */
+  if(!e.sleepStart && e.sleepEnd){
+    const y = addDays(curDate, -1), pe = db.entries[y];
+    if(pe && pe.sleepStart && !pe.sleepEnd){
+      e.sleepStart = pe.sleepStart;
+      delete pe.sleepStart;
+      if(!hasRealData(pe)) delete db.entries[y];   // 昨天只剩空壳就删掉,免得拉低完成率
+    }
+  }
   e.protein = document.getElementById('f_protein').value;
   e.train   = document.getElementById('f_train').value;
   e.free    = document.getElementById('f_free').value;
